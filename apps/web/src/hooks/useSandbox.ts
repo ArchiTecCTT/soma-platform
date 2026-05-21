@@ -30,10 +30,7 @@ export function useSandbox(initialCode = `export function add(a, b) {\n  return 
     setStderr('');
 
     try {
-      // Sync active file with current code
-      await client.syncFile('/src/index.js', code);
-
-      // Run code entry-point
+      // runEntry writes the latest code to the filesystem and executes it
       await client.runEntry('/src/index.js');
 
       // Generate turn/session metrics

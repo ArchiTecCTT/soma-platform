@@ -68,13 +68,21 @@ export class SandboxClient {
     try {
       const container = await this.init();
 
-      // Spawn node — first verify file exists, then require it
-      const process = await container.spawn('node', ['-e', `
-        const fs = require('fs');
-        const fp = '${entryPath}';
-        if (!fs.existsSync(fp)) throw new Error('ENOENT: ' + fp);
-        require(fp);
-      `]);
+      // Ensure directory exists
+      const dir = entryPath.substring(0, entryPath.lastIndexOf('/'));
+      if (dir && dir !== '/') {
+        await container.fs.mkdir(dir, { recursive: true });
+      }
+
+      // Write the file to the WebContainer filesystem
+      const content = this.files.get(entryPath);
+      if (!content) {
+        throw new Error(`No content for ${entryPath}`);
+      }
+      await container.fs.writeFile(entryPath, content);
+
+      // Spawn node
+      const process = await container.spawn('node', [entryPath]);
 
       // Pipe stdout
       const writableStdout = new WritableStream({
