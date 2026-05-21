@@ -17,6 +17,13 @@ The operational centerpiece of this environment is the **Rector Agentic Mentor S
 
 ---
 
+## MVP-1 verification
+- `pnpm check`
+- `pnpm test`
+- Follow `docs/demo/voice-sandbox-rpc-smoke.md`
+
+---
+
 ## 🏛 Core Philosophical Mandates
 
 ### 1. The 90% Retention Mandate
