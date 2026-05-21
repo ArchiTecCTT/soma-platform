@@ -5,6 +5,11 @@ import dotenv from 'dotenv';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
+// Map shared config schema to LiveKit Agent CLI expected keys
+if (process.env.LIVEKIT_WS_URL && !process.env.LIVEKIT_URL) {
+  process.env.LIVEKIT_URL = process.env.LIVEKIT_WS_URL;
+}
+
 import { cli, defineAgent, voice, WorkerOptions, type JobContext } from '@livekit/agents';
 import { parseAgentEnv } from './env.js';
 import { createAzureRealtimeModel } from './realtime/createAzureRealtimeModel.js';
