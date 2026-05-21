@@ -48,19 +48,20 @@ export class SandboxClient {
   async syncFile(path: string, content: string): Promise<void> {
     this.files.set(path, content);
     if (this.webcontainer) {
-      // Ensure folder of the file path is created
-      const dir = path.substring(0, path.lastIndexOf('/'));
-      if (dir && dir !== '/') {
+      const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+      const dir = normalizedPath.substring(0, normalizedPath.lastIndexOf('/'));
+      if (dir) {
         await this.webcontainer.fs.mkdir(dir, { recursive: true });
       }
-      await this.webcontainer.fs.writeFile(path, content);
+      await this.webcontainer.fs.writeFile(normalizedPath, content);
     }
   }
 
   async runEntry(entryPath: string): Promise<number> {
     this.activeFilePath = entryPath;
     this.status = 'running';
-    this.lastCommand = `node ${entryPath}`;
+    const normalizedPath = entryPath.startsWith('/') ? entryPath.substring(1) : entryPath;
+    this.lastCommand = `node ./${normalizedPath}`;
     this.stdoutTail = '';
     this.stderrTail = '';
     this.exitCode = null;
@@ -68,21 +69,17 @@ export class SandboxClient {
     try {
       const container = await this.init();
 
-      // Ensure directory exists
-      const dir = entryPath.substring(0, entryPath.lastIndexOf('/'));
-      if (dir && dir !== '/') {
+      const dir = normalizedPath.substring(0, normalizedPath.lastIndexOf('/'));
+      if (dir) {
         await container.fs.mkdir(dir, { recursive: true });
       }
 
       // Write the file to the WebContainer filesystem
-      const content = this.files.get(entryPath);
-      if (!content) {
-        throw new Error(`No content for ${entryPath}`);
-      }
-      await container.fs.writeFile(entryPath, content);
+      const content = this.files.get(entryPath) || this.files.get('/' + normalizedPath) || '';
+      await container.fs.writeFile(normalizedPath, content);
 
-      // Spawn node
-      const process = await container.spawn('node', [entryPath]);
+      // Spawn node using relative path
+      const process = await container.spawn('node', ['./' + normalizedPath]);
 
       // Pipe stdout
       const writableStdout = new WritableStream({
