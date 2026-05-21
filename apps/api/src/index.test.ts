@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createApp } from './index';
+import { promises as fs } from 'fs';
+import * as path from 'path';
 
 describe('Soma API Endpoints', () => {
   const mockEnv = {
@@ -36,5 +38,35 @@ describe('Soma API Endpoints', () => {
     expect(body.wsUrl).toBe('wss://example.livekit.cloud');
     expect(typeof body.token).toBe('string');
     expect(body.token.length).toBeGreaterThan(20);
+  });
+
+  it('POST /events appends event and returns 200 with ok and filePath', async () => {
+    const tempDir = await fs.mkdtemp(path.join(process.env.TEMP || '/tmp', 'soma-api-test-'));
+    try {
+      const app = createApp({ ...mockEnv, EVENTS_DIR: tempDir });
+      const event = {
+        sessionId: 'session-api-1',
+        kind: 'user.message',
+        payload: { text: 'hello from api' },
+        createdAt: '2026-05-21T00:00:00.000Z',
+      };
+      
+      const res = await app.request('/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(event),
+      });
+
+      expect(res.status).toBe(200);
+      const resBody = await res.json() as { ok: boolean; filePath: string };
+      expect(resBody.ok).toBe(true);
+      expect(resBody.filePath).toBe(path.join(tempDir, 'session-api-1.jsonl'));
+
+      const fileContent = await fs.readFile(resBody.filePath, 'utf-8');
+      expect(fileContent).toContain('user.message');
+      expect(fileContent).toContain('hello from api');
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
   });
 });
