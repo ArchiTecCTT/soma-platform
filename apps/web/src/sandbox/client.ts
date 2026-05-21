@@ -1,9 +1,10 @@
 import { WebContainer } from '@webcontainer/api';
 import { SandboxState, SandboxFile, SandboxStateSchema, ReadSandboxStateRequest } from '@soma/shared';
 
+let globalBootPromise: Promise<WebContainer> | null = null;
+let globalWebContainer: WebContainer | null = null;
+
 export class SandboxClient {
-  private webcontainer: WebContainer | null = null;
-  private bootPromise: Promise<WebContainer> | null = null;
   private files: Map<string, string> = new Map();
   private stdoutTail = '';
   private stderrTail = '';
@@ -17,14 +18,18 @@ export class SandboxClient {
     this.files.set('/src/index.js', `export function add(a, b) {\n  return a + b;\n}\nconsole.log(add(2, 3));\n`);
   }
 
+  get webcontainer(): WebContainer | null {
+    return globalWebContainer;
+  }
+
   async init(): Promise<WebContainer> {
-    if (this.bootPromise) {
-      return this.bootPromise;
+    if (globalBootPromise) {
+      return globalBootPromise;
     }
 
-    this.bootPromise = (async () => {
+    globalBootPromise = (async () => {
       const instance = await WebContainer.boot();
-      this.webcontainer = instance;
+      globalWebContainer = instance;
 
       // Ensure directory /src recursive
       await instance.fs.mkdir('/src', { recursive: true });
@@ -37,7 +42,7 @@ export class SandboxClient {
       return instance;
     })();
 
-    return this.bootPromise;
+    return globalBootPromise;
   }
 
   async syncFile(path: string, content: string): Promise<void> {
