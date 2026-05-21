@@ -1,8 +1,16 @@
 import React from 'react';
 import { useSandbox } from '../hooks/useSandbox';
 
-export function CodeWorkspace() {
-  const { code, setCode, status, stdout, stderr, run } = useSandbox();
+interface CodeWorkspaceProps {
+  sandbox?: ReturnType<typeof useSandbox>;
+}
+
+export function CodeWorkspace({ sandbox }: CodeWorkspaceProps) {
+  // Fallback to local sandbox hook if not provided
+  const localSandbox = useSandbox();
+  const activeSandbox = sandbox || localSandbox;
+  const { code, setCode, status, stdout, stderr, run } = activeSandbox;
+
 
   return (
     <div className="flex flex-col h-full w-full p-4 gap-4 bg-slate-900 text-white rounded-lg shadow-lg">

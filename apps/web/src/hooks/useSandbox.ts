@@ -58,6 +58,7 @@ export function useSandbox(initialCode = `export function add(a, b) {\n  return 
   }, [client, code]);
 
   return {
+    client,
     code,
     setCode: syncActiveFile,
     status,
@@ -67,3 +68,4 @@ export function useSandbox(initialCode = `export function add(a, b) {\n  return 
     run,
   };
 }
+

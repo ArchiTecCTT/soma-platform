@@ -1,5 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useVoiceRoom } from '../hooks/useVoiceRoom';
+import { CodeWorkspace } from './CodeWorkspace';
+import { useSandbox } from '../hooks/useSandbox';
+import { registerSandboxRpc } from '../livekit/registerSandboxRpc';
 
 interface VoiceSessionShellProps {
   apiBaseUrl: string;
@@ -10,11 +13,20 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
   // Stable identity for the lifetime of this component instance
   const identity = useMemo(() => `user-${crypto.randomUUID()}`, []);
 
-  const { status, error, connect, disconnect } = useVoiceRoom({
+  const sandbox = useSandbox();
+
+  const { room, status, error, connect, disconnect } = useVoiceRoom({
     apiBaseUrl,
     roomName,
     identity,
   });
+
+  // Automatically register RPC when room gets connected
+  useEffect(() => {
+    if (status === 'connected' && room) {
+      registerSandboxRpc(room, sandbox.client);
+    }
+  }, [status, room, sandbox.client]);
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
@@ -51,6 +63,11 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
           </button>
         )}
       </div>
+
+      <div style={{ marginTop: '2rem' }}>
+        <CodeWorkspace sandbox={sandbox} />
+      </div>
     </div>
   );
 }
+
