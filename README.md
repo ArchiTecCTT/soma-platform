@@ -9,6 +9,14 @@ The operational centerpiece of this environment is the **Rector Agentic Mentor S
 
 ---
 
+## Local MVP-1 services
+
+- `pnpm dev:api` — starts the token API on `http://localhost:8787`
+- `pnpm dev:web` — starts the browser shell
+- `pnpm dev:agent` — starts the LiveKit worker with Azure realtime defaults
+
+---
+
 ## 🏛 Core Philosophical Mandates
 
 ### 1. The 90% Retention Mandate
