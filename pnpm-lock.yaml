@@ -35,6 +35,9 @@ importers:
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
+      zod:
+        specifier: ^3.24.4
+        version: 3.25.76
     devDependencies:
       typescript:
         specifier: ^5.8.2
