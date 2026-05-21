@@ -8,6 +8,10 @@ interface CodeWorkspaceProps {
   sessionId?: string;
 }
 
+function stripAnsi(str: string): string {
+  return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+}
+
 export function CodeWorkspace({ sandbox, apiBaseUrl, sessionId }: CodeWorkspaceProps) {
   // Fallback to local sandbox hook if not provided
   const localSandbox = useSandbox();
@@ -79,10 +83,10 @@ export function CodeWorkspace({ sandbox, apiBaseUrl, sessionId }: CodeWorkspaceP
           <span className="text-sm font-mono text-slate-400">Terminal Output</span>
           <div className="flex-1 p-3 bg-slate-950 border border-slate-800 rounded font-mono text-sm overflow-auto h-full max-h-[380px]">
             {stdout && (
-              <pre className="text-green-400 whitespace-pre-wrap leading-relaxed">{stdout}</pre>
+              <pre className="text-green-400 whitespace-pre-wrap leading-relaxed">{stripAnsi(stdout)}</pre>
             )}
             {stderr && (
-              <pre className="text-red-400 whitespace-pre-wrap leading-relaxed">{stderr}</pre>
+              <pre className="text-red-400 whitespace-pre-wrap leading-relaxed">{stripAnsi(stderr)}</pre>
             )}
             {!stdout && !stderr && (
               <span className="text-slate-600 italic">No output yet. Click 'Run Code' above.</span>
