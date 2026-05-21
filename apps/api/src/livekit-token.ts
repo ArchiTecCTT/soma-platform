@@ -13,6 +13,7 @@ export async function createLiveKitJoinToken(
 
   token.addGrant({
     roomJoin: true,
+    room,
     canPublish: true,
     canSubscribe: true,
   });
