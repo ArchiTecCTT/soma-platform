@@ -1,5 +1,10 @@
 import { fileURLToPath } from 'node:url';
-import 'dotenv/config';
+import path from 'node:path';
+import dotenv from 'dotenv';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
 import { cli, defineAgent, voice, WorkerOptions, type JobContext } from '@livekit/agents';
 import { parseAgentEnv } from './env.js';
 import { createAzureRealtimeModel } from './realtime/createAzureRealtimeModel.js';
