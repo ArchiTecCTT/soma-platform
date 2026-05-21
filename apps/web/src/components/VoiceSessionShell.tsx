@@ -1,15 +1,16 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { useVoiceRoom } from '../hooks/useVoiceRoom';
 import { CodeWorkspace } from './CodeWorkspace';
 import { useSandbox } from '../hooks/useSandbox';
 import { registerSandboxRpc } from '../livekit/registerSandboxRpc';
+import { postSessionEvent } from '../lib/events';
 
 interface VoiceSessionShellProps {
   apiBaseUrl: string;
 }
 
 export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
-  const roomName = 'soma-mvp';
+  const roomName = 'soma-mvp-demo';
   // Stable identity for the lifetime of this component instance
   const identity = useMemo(() => `user-${crypto.randomUUID()}`, []);
 
@@ -21,12 +22,43 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
     identity,
   });
 
-  // Automatically register RPC when room gets connected
+  // Keep track of the active connection identity/session we have registered and posted a joined event for.
+  const hasRegisteredRef = useRef<{ identity: string; roomName: string } | null>(null);
+
+  // Reset the registration guard if we disconnect or become idle
+  useEffect(() => {
+    if (status !== 'connected') {
+      hasRegisteredRef.current = null;
+    }
+  }, [status]);
+
+  // Automatically register RPC when room gets connected, and post lifecycle event
   useEffect(() => {
     if (status === 'connected' && room) {
+      // Check if we have already registered for this active connection identity and session/room
+      if (
+        hasRegisteredRef.current &&
+        hasRegisteredRef.current.identity === identity &&
+        hasRegisteredRef.current.roomName === roomName
+      ) {
+        return;
+      }
+
+      // Mark as registered/joined before doing async tasks to prevent race conditions or duplicates
+      hasRegisteredRef.current = { identity, roomName };
+
       registerSandboxRpc(room, sandbox.client);
+      
+      postSessionEvent(apiBaseUrl, {
+        sessionId: roomName,
+        kind: 'session.lifecycle',
+        payload: { action: 'joined', identity },
+        createdAt: new Date().toISOString(),
+      }).catch((err) => {
+        console.error('Failed to post session lifecycle joined event:', err);
+      });
     }
-  }, [status, room, sandbox.client]);
+  }, [status, room, sandbox.client, apiBaseUrl, identity, roomName]);
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
@@ -65,9 +97,10 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
       </div>
 
       <div style={{ marginTop: '2rem' }}>
-        <CodeWorkspace sandbox={sandbox} />
+        <CodeWorkspace sandbox={sandbox} apiBaseUrl={apiBaseUrl} sessionId={roomName} />
       </div>
     </div>
   );
 }
+
 

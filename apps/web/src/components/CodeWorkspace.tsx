@@ -1,16 +1,53 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useSandbox } from '../hooks/useSandbox';
+import { postSessionEvent } from '../lib/events';
 
 interface CodeWorkspaceProps {
   sandbox?: ReturnType<typeof useSandbox>;
+  apiBaseUrl?: string;
+  sessionId?: string;
 }
 
-export function CodeWorkspace({ sandbox }: CodeWorkspaceProps) {
+export function CodeWorkspace({ sandbox, apiBaseUrl, sessionId }: CodeWorkspaceProps) {
   // Fallback to local sandbox hook if not provided
   const localSandbox = useSandbox();
   const activeSandbox = sandbox || localSandbox;
-  const { code, setCode, status, stdout, stderr, run } = activeSandbox;
+  const { code, setCode, status, stdout, stderr, run, client } = activeSandbox;
 
+  const handleRun = useCallback(async () => {
+    // Sync the code to /src/index.js first
+    await client.syncFile('/src/index.js', code);
+
+    // Run the code
+    await run();
+
+    // Get fresh snapshot from sandbox client
+    const activeSessionId = sessionId || 'local-preview';
+    const turnId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 't-' + Math.random().toString(36).substring(2, 9);
+    
+    const snapshot = client.snapshot({
+      sessionId: activeSessionId,
+      turnId,
+      maxChars: 4000,
+    });
+
+    if (apiBaseUrl) {
+      postSessionEvent(apiBaseUrl, {
+        sessionId: activeSessionId,
+        turnId,
+        kind: 'sandbox.run',
+        payload: {
+          activeFilePath: '/src/index.js',
+          status: snapshot.status,
+          stdoutTail: snapshot.stdoutTail || '',
+          stderrTail: snapshot.stderrTail || '',
+        },
+        createdAt: new Date().toISOString(),
+      }).catch((err) => {
+        console.error('Failed to post sandbox.run event:', err);
+      });
+    }
+  }, [run, client, code, apiBaseUrl, sessionId]);
 
   return (
     <div className="flex flex-col h-full w-full p-4 gap-4 bg-slate-900 text-white rounded-lg shadow-lg">
@@ -21,7 +58,7 @@ export function CodeWorkspace({ sandbox }: CodeWorkspaceProps) {
             Status: <span className={`font-semibold ${status === 'running' ? 'text-yellow-400' : status === 'completed' ? 'text-green-400' : status === 'failed' ? 'text-red-400' : 'text-slate-400'}`}>{status}</span>
           </span>
           <button
-            onClick={run}
+            onClick={handleRun}
             disabled={status === 'running'}
             className="px-4 py-1.5 bg-teal-500 hover:bg-teal-600 disabled:bg-slate-700 text-slate-950 font-semibold font-mono rounded text-sm transition-colors shadow"
           >
@@ -59,3 +96,4 @@ export function CodeWorkspace({ sandbox }: CodeWorkspaceProps) {
     </div>
   );
 }
+

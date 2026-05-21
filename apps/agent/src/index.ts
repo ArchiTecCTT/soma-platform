@@ -7,12 +7,25 @@ import { RAMS_SYSTEM_PROMPT } from './rams/systemPrompt.js';
 import { createTurnId } from '@soma/shared';
 import { requestSandboxState } from './rpc/requestSandboxState.js';
 import { createReadSandboxStateTool } from './tools/readSandboxStateTool.js';
+import { postAgentEvent } from './lib/events.js';
 
 export default defineAgent({
   entry: async (ctx: JobContext) => {
     const env = parseAgentEnv(process.env);
     await ctx.connect();
     const participant = await ctx.waitForParticipant();
+
+    await postAgentEvent(env.API_BASE_URL, {
+      sessionId: ctx.room.name || 'soma-mvp-demo',
+      kind: 'session.lifecycle',
+      payload: {
+        action: 'agent-joined',
+        participant: participant.identity,
+      },
+      createdAt: new Date().toISOString(),
+    }).catch((err) => {
+      console.error('Failed to post agent-joined event:', err);
+    });
 
     const readSandboxState = createReadSandboxStateTool(async (args) => {
       return requestSandboxState(ctx, participant, {
@@ -46,3 +59,4 @@ export default defineAgent({
 cli.runApp(new WorkerOptions({
   agent: fileURLToPath(import.meta.url),
 }));
+
