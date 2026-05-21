@@ -68,8 +68,13 @@ export class SandboxClient {
     try {
       const container = await this.init();
 
-      // Spawn node
-      const process = await container.spawn('node', [entryPath]);
+      // Spawn node — first verify file exists, then require it
+      const process = await container.spawn('node', ['-e', `
+        const fs = require('fs');
+        const fp = '${entryPath}';
+        if (!fs.existsSync(fp)) throw new Error('ENOENT: ' + fp);
+        require(fp);
+      `]);
 
       // Pipe stdout
       const writableStdout = new WritableStream({

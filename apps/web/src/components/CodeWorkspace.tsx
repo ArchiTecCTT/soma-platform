@@ -15,10 +15,7 @@ export function CodeWorkspace({ sandbox, apiBaseUrl, sessionId }: CodeWorkspaceP
   const { code, setCode, status, stdout, stderr, run, client } = activeSandbox;
 
   const handleRun = useCallback(async () => {
-    // Sync the code to /src/index.js first
-    await client.syncFile('/src/index.js', code);
-
-    // Run the code
+    // run() already syncs /src/index.js and executes it
     await run();
 
     // Get fresh snapshot from sandbox client
