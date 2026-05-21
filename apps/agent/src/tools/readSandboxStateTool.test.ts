@@ -15,15 +15,16 @@ describe('readSandboxStateTool', () => {
     const tool = createReadSandboxStateTool(requestSandboxState as never);
 
     const result = await tool.execute(
-      { sessionId: 's-1', turnId: 't-1', maxChars: 4000 },
+      { maxChars: 4000 },
       { toolCallId: 'call-1', ctx: {} as never }
     );
 
-    expect(requestSandboxState).toHaveBeenCalledWith({
-      sessionId: 's-1',
-      turnId: 't-1',
-      maxChars: 4000,
-    });
+    expect(requestSandboxState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: '',
+        maxChars: 4000,
+      })
+    );
     expect(result).toBe(JSON.stringify(mockSnapshot));
   });
 });

@@ -17,9 +17,10 @@ export const agentEnvSchema = z.object({
   LIVEKIT_API_SECRET: required,
   AZURE_OPENAI_ENDPOINT: url,
   AZURE_OPENAI_API_KEY: required,
-  AZURE_OPENAI_REALTIME_DEPLOYMENT: z.string().default('gpt-realtime-2'),
+  AZURE_OPENAI_REALTIME_DEPLOYMENT: z.string().default('gpt-realtime-mini'),
   AZURE_OPENAI_TRANSCRIPTION_DEPLOYMENT: z.string().optional().default('gpt-realtime-whisper'),
   OPENAI_API_VERSION: z.string().default('2025-04-01-preview'),
+  MENTOR_MODE: z.enum(['technical', 'philosophy']).default('technical'),
   EVENTS_DIR: z.string().default('data/session-events'),
   API_BASE_URL: url.default('http://localhost:8787'),
 });

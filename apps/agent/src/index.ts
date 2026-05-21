@@ -14,6 +14,7 @@ import { cli, defineAgent, voice, WorkerOptions, type JobContext } from '@liveki
 import { parseAgentEnv } from './env.js';
 import { createAzureRealtimeModel } from './realtime/createAzureRealtimeModel.js';
 import { RAMS_SYSTEM_PROMPT } from './rams/systemPrompt.js';
+import { PHILOSOPHY_MENTOR_PROMPT } from './rams/philosophyPrompt.js';
 import { createTurnId } from '@soma/shared';
 import { requestSandboxState } from './rpc/requestSandboxState.js';
 import { createReadSandboxStateTool } from './tools/readSandboxStateTool.js';
@@ -39,16 +40,21 @@ export default defineAgent({
 
     const readSandboxState = createReadSandboxStateTool(async (args) => {
       return requestSandboxState(ctx, participant, {
-        ...args,
+        sessionId: ctx.room.name || 'soma-mvp-demo',
         turnId: args.turnId || createTurnId(),
+        maxChars: args.maxChars,
       });
     });
 
+    const isPhilosophyMode = env.MENTOR_MODE === 'philosophy';
+
     const agent = new voice.Agent({
-      instructions: RAMS_SYSTEM_PROMPT,
-      tools: {
-        readSandboxState,
-      },
+      instructions: isPhilosophyMode ? PHILOSOPHY_MENTOR_PROMPT : RAMS_SYSTEM_PROMPT,
+      tools: isPhilosophyMode
+        ? {}
+        : {
+            readSandboxState,
+          },
     });
 
     const session = new voice.AgentSession({
@@ -61,7 +67,9 @@ export default defineAgent({
     });
 
     await session.generateReply({
-      instructions: 'Greet the user, explain that they should write a tiny JS function and you will inspect the live sandbox when they make code claims.',
+      instructions: isPhilosophyMode
+        ? 'Greet the user, explain that you are now in philosophy mentor mode, and invite them to present a philosophical claim or question for examination.'
+        : 'Greet the user, explain that they should write a tiny JS function and you will inspect the live sandbox when they make code claims.',
     });
   },
 });

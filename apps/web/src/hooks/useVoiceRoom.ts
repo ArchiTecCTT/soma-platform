@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Room, RoomEvent } from 'livekit-client';
+import { Room, RoomEvent, Track } from 'livekit-client';
 import { fetchLiveKitToken } from '../lib/api';
 
 export type RoomConnectionStatus = 'idle' | 'connecting' | 'connected' | 'error';
@@ -22,9 +22,34 @@ export function useVoiceRoom({ apiBaseUrl, roomName, identity }: UseVoiceRoomOpt
     });
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
+    const attachedElements: HTMLElement[] = [];
+
+    const handleTrackSubscribed = (track: any) => {
+      if (track.kind !== Track.Kind.Audio) return;
+      const element = track.attach();
+      element.autoplay = true;
+      if ('playsInline' in element) {
+        (element as any).playsInline = true;
+      }
+      element.style.display = 'none';
+      document.body.appendChild(element);
+      attachedElements.push(element);
+      void (element as HTMLMediaElement).play?.().catch(() => {});
+    };
+
+    const handleTrackUnsubscribed = (track: any) => {
+      if (track.kind !== Track.Kind.Audio) return;
+      track.detach().forEach((el: Element) => el.remove());
+    };
+
+    room.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    room.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
+
     return () => {
+      room.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+      room.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
+      attachedElements.forEach((el) => el.remove());
       room.disconnect();
     };
   }, [room]);
@@ -38,6 +63,7 @@ export function useVoiceRoom({ apiBaseUrl, roomName, identity }: UseVoiceRoomOpt
     try {
       const { wsUrl, token } = await fetchLiveKitToken(apiBaseUrl, roomName, identity);
       await room.connect(wsUrl, token);
+      await room.localParticipant.setMicrophoneEnabled(true);
       setStatus('connected');
     } catch (err: any) {
       setError(err instanceof Error ? err.message : String(err));
@@ -47,6 +73,7 @@ export function useVoiceRoom({ apiBaseUrl, roomName, identity }: UseVoiceRoomOpt
 
   const disconnect = async () => {
     try {
+      await room.localParticipant.setMicrophoneEnabled(false).catch(() => {});
       await room.disconnect();
     } catch (err) {
       // Ignore disconnect errors

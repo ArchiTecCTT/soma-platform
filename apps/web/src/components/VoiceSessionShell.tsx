@@ -11,9 +11,7 @@ interface VoiceSessionShellProps {
 
 export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
   const roomName = 'soma-mvp-demo';
-  // Stable identity for the lifetime of this component instance
   const identity = useMemo(() => `user-${crypto.randomUUID()}`, []);
-
   const sandbox = useSandbox();
 
   const { room, status, error, connect, disconnect } = useVoiceRoom({
@@ -22,20 +20,16 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
     identity,
   });
 
-  // Keep track of the active connection identity/session we have registered and posted a joined event for.
   const hasRegisteredRef = useRef<{ identity: string; roomName: string } | null>(null);
 
-  // Reset the registration guard if we disconnect or become idle
   useEffect(() => {
     if (status !== 'connected') {
       hasRegisteredRef.current = null;
     }
   }, [status]);
 
-  // Automatically register RPC when room gets connected, and post lifecycle event
   useEffect(() => {
     if (status === 'connected' && room) {
-      // Check if we have already registered for this active connection identity and session/room
       if (
         hasRegisteredRef.current &&
         hasRegisteredRef.current.identity === identity &&
@@ -44,11 +38,9 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
         return;
       }
 
-      // Mark as registered/joined before doing async tasks to prevent race conditions or duplicates
       hasRegisteredRef.current = { identity, roomName };
-
       registerSandboxRpc(room, sandbox.client);
-      
+
       postSessionEvent(apiBaseUrl, {
         sessionId: roomName,
         kind: 'session.lifecycle',
@@ -60,139 +52,112 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
     }
   }, [status, room, sandbox.client, apiBaseUrl, identity, roomName]);
 
+  const statusColor =
+    status === 'connected' ? '#34d399' : status === 'connecting' ? '#fbbf24' : status === 'error' ? '#fb7185' : '#64748b';
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-teal-400 animate-ping"></span>
-            <h1 className="text-2xl font-black tracking-wider bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent font-mono">
+    <div style={{ minHeight: '100vh', background: '#020617', color: '#e2e8f0' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: 24 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 16,
+            padding: '18px 20px',
+            marginBottom: 24,
+            border: '1px solid #1e293b',
+            borderRadius: 16,
+            background: 'linear-gradient(180deg, #0f172a 0%, #020617 100%)',
+            boxShadow: '0 20px 50px rgba(0,0,0,.35)',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <div className="mono" style={{ color: '#2dd4bf', fontSize: 34, fontWeight: 800, letterSpacing: 1 }}>
               SOMA PLATFORM
-            </h1>
+            </div>
+            <div className="mono" style={{ color: '#94a3b8', fontSize: 12, marginTop: 4 }}>
+              MVP-1 // ADVERSARIAL LEARNING ENVIRONMENT
+            </div>
           </div>
-          <p className="text-xs text-slate-500 font-mono mt-0.5">MVP-1 // ADVERSARIAL LEARNING ENVIRONMENT</p>
+          <button
+            onClick={status === 'connected' ? disconnect : connect}
+            disabled={status === 'connecting'}
+            style={{
+              padding: '12px 18px',
+              borderRadius: 12,
+              border: '1px solid ' + (status === 'connected' ? '#7f1d1d' : '#134e4a'),
+              background: status === 'connected' ? '#3f0d17' : '#14b8a6',
+              color: status === 'connected' ? '#fecdd3' : '#042f2e',
+              cursor: status === 'connecting' ? 'not-allowed' : 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            {status === 'connected' ? 'Disconnect' : status === 'connecting' ? 'Connecting...' : 'Join Voice Session'}
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          {status === 'connected' ? (
-            <button
-              onClick={disconnect}
-              className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 active:bg-rose-500/30 text-rose-400 border border-rose-500/20 rounded font-mono text-sm font-semibold transition-all shadow-lg shadow-rose-950/20 flex items-center gap-2 cursor-pointer"
-            >
-              <span className="h-2 w-2 rounded-full bg-rose-400"></span>
-              Disconnect
-            </button>
-          ) : (
-            <button
-              onClick={connect}
-              disabled={status === 'connecting'}
-              className="px-5 py-2 bg-teal-500 hover:bg-teal-400 disabled:bg-slate-800 active:bg-teal-600 text-slate-950 disabled:text-slate-500 border border-teal-500/20 rounded font-mono text-sm font-bold transition-all shadow-lg shadow-teal-500/10 flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-            >
-              {status === 'connecting' ? (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse"></span>
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <span className="h-2 w-2 rounded-full bg-teal-900"></span>
-                  Join Voice Session
-                </>
+        <div style={{ display: 'grid', gridTemplateColumns: '340px minmax(0, 1fr)', gap: 24, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gap: 24 }}>
+            <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 16, padding: 20 }}>
+              <div className="mono" style={{ fontWeight: 800, color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>
+                SESSION PROFILE
+              </div>
+              <div style={{ display: 'grid', gap: 14, fontSize: 14 }}>
+                <div>
+                  <div className="mono" style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>ACTIVE ROOM</div>
+                  <div className="mono" style={{ color: '#2dd4bf' }}>{roomName}</div>
+                </div>
+                <div>
+                  <div className="mono" style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>SESSION ID</div>
+                  <div className="mono" style={{ color: '#2dd4bf', wordBreak: 'break-all', background: '#020617', border: '1px solid #1e293b', borderRadius: 10, padding: 10 }}>
+                    {roomName}
+                  </div>
+                </div>
+                <div>
+                  <div className="mono" style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>PARTICIPANT ID</div>
+                  <div className="mono" style={{ color: '#cbd5e1', wordBreak: 'break-all', background: '#020617', border: '1px solid #1e293b', borderRadius: 10, padding: 10 }}>
+                    {identity}
+                  </div>
+                </div>
+                <div>
+                  <div className="mono" style={{ fontSize: 11, color: '#64748b', marginBottom: 6 }}>SIGNAL STATUS</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 999, background: statusColor, display: 'inline-block' }} />
+                    <span className="mono" style={{ textTransform: 'uppercase', fontWeight: 700 }}>{status}</span>
+                  </div>
+                </div>
+              </div>
+              {error && (
+                <div className="mono" style={{ marginTop: 16, padding: 12, borderRadius: 10, background: '#3f0d17', border: '1px solid #7f1d1d', color: '#fecdd3', fontSize: 12 }}>
+                  {error}
+                </div>
               )}
-            </button>
-          )}
+            </div>
+
+            <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 16, padding: 20 }}>
+              <div className="mono" style={{ fontWeight: 800, color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>
+                LEARNING MISSION
+              </div>
+              <ol style={{ margin: 0, paddingLeft: 18, color: '#cbd5e1', lineHeight: 1.7 }}>
+                <li>Change code to subtraction: <span className="mono" style={{ color: '#34d399' }}>return a - b;</span></li>
+                <li>Press <strong>Run Code</strong> and confirm terminal shows <span className="mono" style={{ color: '#34d399' }}>-1</span>.</li>
+                <li>Press <strong>Join Voice Session</strong>.</li>
+                <li>Make sure the <strong>agent service</strong> is running locally.</li>
+                <li>Then say: <em>“My add function is correct.”</em></li>
+              </ol>
+              <div className="mono" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #1e293b', fontSize: 11, color: '#64748b' }}>
+                RAMS AGENTIC MENTOR SYSTEM // AZURE GPT-REALTIME
+              </div>
+            </div>
+          </div>
+
+          <section>
+            <CodeWorkspace sandbox={sandbox} apiBaseUrl={apiBaseUrl} sessionId={roomName} />
+          </section>
         </div>
-      </header>
-
-      {/* Main Grid Layout */}
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sidebar Status & Control */}
-        <section className="lg:col-span-1 flex flex-col gap-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-xl">
-            <h2 className="text-sm font-bold font-mono tracking-widest text-slate-400 uppercase mb-4 border-b border-slate-800 pb-2">
-              Session Profile
-            </h2>
-            <div className="space-y-4 text-sm">
-              <div>
-                <span className="block text-xs font-mono text-slate-500 uppercase">Active Room</span>
-                <span className="font-mono text-teal-400 font-bold">{roomName}</span>
-              </div>
-              <div>
-                <span className="block text-xs font-mono text-slate-500 uppercase">Participant ID</span>
-                <span className="font-mono text-slate-300 break-all select-all text-xs bg-slate-950 p-2 rounded block border border-slate-800/50 mt-1">
-                  {identity}
-                </span>
-              </div>
-              <div>
-                <span className="block text-xs font-mono text-slate-500 uppercase">Signal Status</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      status === 'connected'
-                        ? 'bg-emerald-400 animate-pulse'
-                        : status === 'connecting'
-                        ? 'bg-yellow-400 animate-pulse'
-                        : status === 'error'
-                        ? 'bg-rose-500'
-                        : 'bg-slate-600'
-                    }`}
-                  ></span>
-                  <span className="font-mono text-xs uppercase font-bold tracking-wider">
-                    {status}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {error && (
-              <div className="mt-5 p-3.5 bg-rose-950/20 border border-rose-500/20 rounded text-rose-400 text-xs font-mono">
-                <div className="font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                  ⚠️ Signal Error
-                </div>
-                {error}
-              </div>
-            )}
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-xl flex-1 flex flex-col justify-between">
-            <div>
-              <h2 className="text-sm font-bold font-mono tracking-widest text-slate-400 uppercase mb-4 border-b border-slate-800 pb-2">
-                Learning Mission
-              </h2>
-              <ul className="space-y-3.5 text-xs text-slate-400 font-mono leading-relaxed">
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-400 mt-0.5">▶</span>
-                  <span>Change the code in the workspace to return subtraction (e.g. <code className="text-emerald-400">a - b</code>).</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-400 mt-0.5">▶</span>
-                  <span>Click <strong className="text-slate-200">Run Code</strong> and confirm terminal output shows buggy <code className="text-emerald-400">-1</code>.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-400 mt-0.5">▶</span>
-                  <span>Click <strong className="text-slate-200">Join Voice Session</strong> to summon RAMS.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-teal-400 mt-0.5">▶</span>
-                  <span>Unmute and boast: <em className="text-slate-200">"My add function is correct!"</em></span>
-                </li>
-              </ul>
-            </div>
-            
-            <div className="border-t border-slate-800 pt-4 mt-6 text-[10px] text-slate-600 font-mono">
-              RAMS AGENTIC MENTOR SYSTEM v1.0 // POWERED BY AZURE GPT-REALTIME
-            </div>
-          </div>
-        </section>
-
-        {/* Code & Terminal Workspace Area */}
-        <section className="lg:col-span-2">
-          <CodeWorkspace sandbox={sandbox} apiBaseUrl={apiBaseUrl} sessionId={roomName} />
-        </section>
-      </main>
+      </div>
     </div>
   );
 }
-
-
