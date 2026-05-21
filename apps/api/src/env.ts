@@ -1,5 +1,5 @@
-import { apiEnvSchema, type ApiEnv } from '@soma/shared';
+import { apiEnvSchema, type ApiEnv, parseApiEnv as sharedParseApiEnv } from '@soma/shared';
 
 export function parseApiEnv(env: Record<string, string | undefined>): ApiEnv {
-  return apiEnvSchema.parse(env);
+  return sharedParseApiEnv(env);
 }

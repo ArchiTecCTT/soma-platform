@@ -36,8 +36,27 @@ export type WebEnv = z.infer<typeof webEnvSchema>;
 export const AgentEnvSchema = agentEnvSchema;
 export const WebEnvSchema = webEnvSchema;
 
+function preprocessEnv(env: Record<string, string | undefined>) {
+  const wsUrl = env.LIVEKIT_WS_URL || env.LIVEKIT_URL;
+  const cleanWsUrl = wsUrl ? wsUrl.replace(/^['"]|['"]$/g, '').trim() : undefined;
+  
+  const cleanApiKey = env.LIVEKIT_API_KEY ? env.LIVEKIT_API_KEY.replace(/^['"]|['"]$/g, '').trim() : undefined;
+  const cleanApiSecret = env.LIVEKIT_API_SECRET ? env.LIVEKIT_API_SECRET.replace(/^['"]|['"]$/g, '').trim() : undefined;
+
+  return {
+    ...env,
+    LIVEKIT_WS_URL: cleanWsUrl,
+    LIVEKIT_API_KEY: cleanApiKey,
+    LIVEKIT_API_SECRET: cleanApiSecret,
+  };
+}
+
+export function parseApiEnv(env: Record<string, string | undefined>): ApiEnv {
+  return apiEnvSchema.parse(preprocessEnv(env));
+}
+
 export function parseAgentEnv(env: Record<string, string | undefined>) {
-  return agentEnvSchema.parse(env);
+  return agentEnvSchema.parse(preprocessEnv(env));
 }
 
 export function parseWebEnv(env: Record<string, string | undefined>) {
