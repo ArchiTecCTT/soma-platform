@@ -66,6 +66,9 @@ importers:
       livekit-server-sdk:
         specifier: ^2.9.2
         version: 2.15.3
+      zod:
+        specifier: ^3.24.4
+        version: 3.25.76
 
   apps/web:
     dependencies:
