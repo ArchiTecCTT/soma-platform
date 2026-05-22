@@ -12,10 +12,9 @@ if (process.env.LIVEKIT_WS_URL && !process.env.LIVEKIT_URL) {
 
 import { cli, defineAgent, voice, WorkerOptions, type JobContext } from '@livekit/agents';
 import { parseAgentEnv } from './env.js';
-import { createAzureRealtimeModel } from './realtime/createAzureRealtimeModel.js';
+import { createAzureRealtimeModel, buildTurnHandlingOptions } from './realtime/createAzureRealtimeModel.js';
 import { RAMS_SYSTEM_PROMPT } from './rams/systemPrompt.js';
 import { PHILOSOPHY_MENTOR_PROMPT } from './rams/philosophyPrompt.js';
-import { createTurnId } from '@soma/shared';
 import { requestSandboxState } from './rpc/requestSandboxState.js';
 import { createReadSandboxStateTool } from './tools/readSandboxStateTool.js';
 import { postAgentEvent } from './lib/events.js';
@@ -26,8 +25,10 @@ export default defineAgent({
     await ctx.connect();
     const participant = await ctx.waitForParticipant();
 
+    const roomName = ctx.room.name || 'soma-mvp-demo';
+
     await postAgentEvent(env.API_BASE_URL, {
-      sessionId: ctx.room.name || 'soma-mvp-demo',
+      sessionId: roomName,
       kind: 'session.lifecycle',
       payload: {
         action: 'agent-joined',
@@ -40,16 +41,47 @@ export default defineAgent({
 
     const readSandboxState = createReadSandboxStateTool(async (args) => {
       return requestSandboxState(ctx, participant, {
-        sessionId: ctx.room.name || 'soma-mvp-demo',
-        turnId: args.turnId || createTurnId(),
+        sessionId: args.sessionId,
+        turnId: args.turnId,
         maxChars: args.maxChars,
       });
-    });
+    }, { sessionId: roomName });
 
     const isPhilosophyMode = env.MENTOR_MODE === 'philosophy';
 
+    // Parse participant metadata for lesson context
+    let lessonContext: { topic: string; curriculum: string; socraticQuestion?: string } | undefined = undefined;
+    if (participant.metadata) {
+      try {
+        const parsed = JSON.parse(participant.metadata);
+        if (parsed && typeof parsed === 'object' && parsed.lessonContext) {
+          lessonContext = parsed.lessonContext;
+        }
+      } catch (err) {
+        console.error('Failed to parse participant metadata:', err);
+      }
+    }
+
+    let instructions = isPhilosophyMode ? PHILOSOPHY_MENTOR_PROMPT : RAMS_SYSTEM_PROMPT;
+    let initialGreeting = isPhilosophyMode
+      ? 'Greet the user, explain that you are now in philosophy mentor mode, and invite them to present a philosophical claim or question for examination.'
+      : 'Greet the user, explain that they should write a tiny JS function and you will inspect the live sandbox when they make code claims.';
+
+    if (lessonContext) {
+      const contextBlock = `
+[LESSON CONTEXT]
+Topic: ${lessonContext.topic}
+Curriculum: ${lessonContext.curriculum}
+${lessonContext.socraticQuestion ? `Socratic Question: ${lessonContext.socraticQuestion}` : ''}
+`;
+      instructions = `${instructions}\n\n${contextBlock}`;
+      initialGreeting = isPhilosophyMode
+        ? `Greet the user, explain that you are now in philosophy mentor mode. Naturally mention that we are examining the topic "${lessonContext.topic}" from the curriculum. Ask them to address the question: "${lessonContext.socraticQuestion || 'their perspective on this topic'}" to begin.`
+        : `Greet the user, welcome them to the session, and explain that you will mentor them on the topic "${lessonContext.topic}". Mention the curriculum "${lessonContext.curriculum}". Explain that they should write a tiny JS function in their sandbox, and you will inspect the live sandbox when they make code claims. Ask them if they are ready to discuss "${lessonContext.topic}".`;
+    }
+
     const agent = new voice.Agent({
-      instructions: isPhilosophyMode ? PHILOSOPHY_MENTOR_PROMPT : RAMS_SYSTEM_PROMPT,
+      instructions,
       tools: isPhilosophyMode
         ? {}
         : {
@@ -59,6 +91,7 @@ export default defineAgent({
 
     const session = new voice.AgentSession({
       llm: createAzureRealtimeModel(env),
+      turnHandling: buildTurnHandlingOptions(env),
     });
 
     await session.start({
@@ -67,9 +100,7 @@ export default defineAgent({
     });
 
     await session.generateReply({
-      instructions: isPhilosophyMode
-        ? 'Greet the user, explain that you are now in philosophy mentor mode, and invite them to present a philosophical claim or question for examination.'
-        : 'Greet the user, explain that they should write a tiny JS function and you will inspect the live sandbox when they make code claims.',
+      instructions: initialGreeting,
     });
   },
 });

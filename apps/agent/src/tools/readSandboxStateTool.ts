@@ -1,6 +1,6 @@
 import { llm } from '@livekit/agents';
 import { z } from 'zod';
-import { SandboxStateSchema } from '@soma/shared';
+import { createTurnId, SandboxStateSchema } from '@soma/shared';
 
 export const ReadSandboxStateParamsSchema = z.object({
   maxChars: z.number().min(1).max(8000).optional(),
@@ -14,15 +14,16 @@ export interface ReadSandboxStateParams extends ReadSandboxStateToolParams {
 }
 
 export function createReadSandboxStateTool(
-  requestSandboxState: (args: ReadSandboxStateParams) => Promise<unknown>
+  requestSandboxState: (args: ReadSandboxStateParams) => Promise<unknown>,
+  options: { sessionId: string }
 ) {
   return llm.tool({
     description: 'Read the current browser sandbox state before critiquing code or execution claims.',
     parameters: ReadSandboxStateParamsSchema,
     execute: async (args: ReadSandboxStateToolParams) => {
       const state = await requestSandboxState({
-        sessionId: '',
-        turnId: crypto.randomUUID(),
+        sessionId: options.sessionId,
+        turnId: createTurnId(),
         maxChars: args.maxChars ?? 4000,
       });
       return JSON.stringify(state);

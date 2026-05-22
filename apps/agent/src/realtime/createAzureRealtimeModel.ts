@@ -1,4 +1,5 @@
 import * as openai from '@livekit/agents-plugin-openai';
+import { voice } from '@livekit/agents';
 import { AgentEnv } from '@soma/shared';
 
 export interface AzureRealtimeOptions {
@@ -9,6 +10,20 @@ export interface AzureRealtimeOptions {
   voice: 'alloy' | 'echo' | 'shimmer';
   inputAudioTranscription?: {
     model: string;
+  };
+}
+
+/**
+ * Builds the TurnHandlingOptions object from the parsed agent environment.
+ */
+export function buildTurnHandlingOptions(env: AgentEnv): NonNullable<voice.AgentSessionOptions['turnHandling']> {
+  return {
+    turnDetection: 'realtime_llm',
+    endpointing: {
+      mode: 'fixed',
+      minDelay: env.VAD_ENDPOINTING_MIN_DELAY_MS,
+      maxDelay: env.VAD_ENDPOINTING_MAX_DELAY_MS,
+    },
   };
 }
 

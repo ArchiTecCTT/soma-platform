@@ -9,6 +9,7 @@ export const apiEnvSchema = z.object({
   LIVEKIT_API_SECRET: required,
   API_PORT: z.coerce.number().default(8787),
   EVENTS_DIR: z.string().default('data/session-events'),
+  RAMS_SHARED_SECRET: required,
 });
 
 export const agentEnvSchema = z.object({
@@ -23,6 +24,8 @@ export const agentEnvSchema = z.object({
   MENTOR_MODE: z.enum(['technical', 'philosophy']).default('technical'),
   EVENTS_DIR: z.string().default('data/session-events'),
   API_BASE_URL: url.default('http://localhost:8787'),
+  VAD_ENDPOINTING_MIN_DELAY_MS: z.coerce.number().int().positive().max(30000).default(1000),
+  VAD_ENDPOINTING_MAX_DELAY_MS: z.coerce.number().int().positive().max(30000).default(3000),
 });
 
 export const webEnvSchema = z.object({

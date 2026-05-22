@@ -12,7 +12,7 @@ describe('readSandboxStateTool', () => {
 
     const requestSandboxState = vi.fn().mockResolvedValue(mockSnapshot);
 
-    const tool = createReadSandboxStateTool(requestSandboxState as never);
+    const tool = createReadSandboxStateTool(requestSandboxState as never, { sessionId: 'soma-mvp-demo' });
 
     const result = await tool.execute(
       { maxChars: 4000 },
@@ -21,7 +21,8 @@ describe('readSandboxStateTool', () => {
 
     expect(requestSandboxState).toHaveBeenCalledWith(
       expect.objectContaining({
-        sessionId: '',
+        sessionId: 'soma-mvp-demo',
+        turnId: expect.stringMatching(/^turn-[0-9a-f-]+$/),
         maxChars: 4000,
       })
     );
