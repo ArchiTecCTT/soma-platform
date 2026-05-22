@@ -4,6 +4,8 @@ import { parseApiEnv } from './env';
 import { createLiveKitJoinToken } from './livekit-token';
 import { SessionEventSchema } from '@soma/shared';
 import { appendSessionEvent } from './store/fileEventStore';
+import { verifyHandoffToken } from './handoff/verifyHandoffToken';
+import { createSessionBootstrap } from './handoff/createSessionBootstrap';
 
 export function createApp(rawEnv: Record<string, string | undefined>) {
   const env = parseApiEnv(rawEnv);
@@ -28,6 +30,20 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
 
     const tokenData = await createLiveKitJoinToken(env, room, identity);
     return c.json(tokenData);
+  });
+
+  app.post('/handoff/bootstrap', async (c) => {
+    try {
+      const body = await c.req.json();
+      if (!body || typeof body.handoff !== 'string') {
+        return c.json({ error: 'Missing handoff token' }, 401);
+      }
+      const payload = verifyHandoffToken(body.handoff, env.RAMS_SHARED_SECRET);
+      const bootstrapData = await createSessionBootstrap(env, payload);
+      return c.json(bootstrapData);
+    } catch (err: any) {
+      return c.json({ error: err.message || 'Unauthorized' }, 401);
+    }
   });
 
   app.post('/events', async (c) => {

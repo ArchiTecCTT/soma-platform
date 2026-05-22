@@ -54,14 +54,25 @@ export function useVoiceRoom({ apiBaseUrl, roomName, identity }: UseVoiceRoomOpt
     };
   }, [room]);
 
-  const connect = async () => {
+  const connect = async (overrideLiveKit?: { url: string; token: string }) => {
     if (status === 'connecting' || status === 'connected') return;
 
     setStatus('connecting');
     setError(null);
 
     try {
-      const { wsUrl, token } = await fetchLiveKitToken(apiBaseUrl, roomName, identity);
+      let wsUrl: string;
+      let token: string;
+
+      if (overrideLiveKit) {
+        wsUrl = overrideLiveKit.url;
+        token = overrideLiveKit.token;
+      } else {
+        const res = await fetchLiveKitToken(apiBaseUrl, roomName, identity);
+        wsUrl = res.wsUrl;
+        token = res.token;
+      }
+
       await room.connect(wsUrl, token);
       await room.localParticipant.setMicrophoneEnabled(true);
       setStatus('connected');

@@ -4,14 +4,23 @@ import { CodeWorkspace } from './CodeWorkspace';
 import { useSandbox } from '../hooks/useSandbox';
 import { registerSandboxRpc } from '../livekit/registerSandboxRpc';
 import { postSessionEvent } from '../lib/events';
+import { useHandoffBootstrap } from '../hooks/useHandoffBootstrap';
 
 interface VoiceSessionShellProps {
   apiBaseUrl: string;
 }
 
 export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
-  const roomName = 'soma-mvp-demo';
-  const identity = useMemo(() => `user-${crypto.randomUUID()}`, []);
+  const { bootstrapData, isLoading: isHandoffLoading, error: handoffError } = useHandoffBootstrap(apiBaseUrl);
+
+  const roomName = bootstrapData ? bootstrapData.roomName : 'soma-mvp-demo';
+  const identity = useMemo(() => {
+    if (bootstrapData) {
+      return bootstrapData.participantName;
+    }
+    return `user-${crypto.randomUUID()}`;
+  }, [bootstrapData]);
+
   const sandbox = useSandbox();
 
   const { room, status, error, connect, disconnect } = useVoiceRoom({
@@ -82,15 +91,15 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
             </div>
           </div>
           <button
-            onClick={status === 'connected' ? disconnect : connect}
-            disabled={status === 'connecting'}
+            onClick={status === 'connected' ? disconnect : () => connect(bootstrapData ? bootstrapData.livekit : undefined)}
+            disabled={status === 'connecting' || isHandoffLoading}
             style={{
               padding: '12px 18px',
               borderRadius: 12,
               border: '1px solid ' + (status === 'connected' ? '#7f1d1d' : '#134e4a'),
               background: status === 'connected' ? '#3f0d17' : '#14b8a6',
               color: status === 'connected' ? '#fecdd3' : '#042f2e',
-              cursor: status === 'connecting' ? 'not-allowed' : 'pointer',
+              cursor: (status === 'connecting' || isHandoffLoading) ? 'not-allowed' : 'pointer',
               fontWeight: 700,
             }}
           >
@@ -134,19 +143,57 @@ export function VoiceSessionShell({ apiBaseUrl }: VoiceSessionShellProps) {
                   {error}
                 </div>
               )}
+              {handoffError && (
+                <div className="mono" style={{ marginTop: 16, padding: 12, borderRadius: 10, background: '#3f0d17', border: '1px solid #7f1d1d', color: '#fecdd3', fontSize: 12 }}>
+                  Handoff Error: {handoffError}
+                </div>
+              )}
+              {isHandoffLoading && (
+                <div className="mono" style={{ marginTop: 16, padding: 12, borderRadius: 10, background: '#020617', border: '1px solid #1e293b', color: '#fbbf24', fontSize: 12 }}>
+                  Verifying handoff session...
+                </div>
+              )}
             </div>
 
             <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 16, padding: 20 }}>
               <div className="mono" style={{ fontWeight: 800, color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>
                 LEARNING MISSION
               </div>
-              <ol style={{ margin: 0, paddingLeft: 18, color: '#cbd5e1', lineHeight: 1.7 }}>
-                <li>Change code to subtraction: <span className="mono" style={{ color: '#34d399' }}>return a - b;</span></li>
-                <li>Press <strong>Run Code</strong> and confirm terminal shows <span className="mono" style={{ color: '#34d399' }}>-1</span>.</li>
-                <li>Press <strong>Join Voice Session</strong>.</li>
-                <li>Make sure the <strong>agent service</strong> is running locally.</li>
-                <li>Then say: <em>“My add function is correct.”</em></li>
-              </ol>
+              {bootstrapData ? (
+                <div style={{ display: 'grid', gap: 14, fontSize: 14 }}>
+                  <div>
+                    <div className="mono" style={{ fontSize: 11, color: '#2dd4bf', marginBottom: 6 }}>TOPIC</div>
+                    <div style={{ color: '#e2e8f0', fontWeight: 600 }}>{bootstrapData.topic}</div>
+                  </div>
+                  <div>
+                    <div className="mono" style={{ fontSize: 11, color: '#2dd4bf', marginBottom: 6 }}>CURRICULUM</div>
+                    <ol style={{ margin: 0, paddingLeft: 18, color: '#cbd5e1', fontSize: 13, lineHeight: 1.5, background: '#020617', border: '1px solid #1e293b', borderRadius: 10, padding: 10 }}>
+                      {bootstrapData.curriculum.map((step) => (
+                        <li key={step.step} style={{ marginBottom: 8 }}>
+                          <strong style={{ color: '#e2e8f0' }}>{step.title}</strong>
+                          <div>{step.description}</div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                  {bootstrapData.socraticQuestion && (
+                    <div>
+                      <div className="mono" style={{ fontSize: 11, color: '#2dd4bf', marginBottom: 6 }}>SOCRATIC QUESTION</div>
+                      <div style={{ color: '#34d399', fontSize: 13, fontStyle: 'italic' }}>
+                        "{bootstrapData.socraticQuestion}"
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <ol style={{ margin: 0, paddingLeft: 18, color: '#cbd5e1', lineHeight: 1.7 }}>
+                  <li>Change code to subtraction: <span className="mono" style={{ color: '#34d399' }}>return a - b;</span></li>
+                  <li>Press <strong>Run Code</strong> and confirm terminal shows <span className="mono" style={{ color: '#34d399' }}>-1</span>.</li>
+                  <li>Press <strong>Join Voice Session</strong>.</li>
+                  <li>Make sure the <strong>agent service</strong> is running locally.</li>
+                  <li>Then say: <em>“My add function is correct.”</em></li>
+                </ol>
+              )}
               <div className="mono" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #1e293b', fontSize: 11, color: '#64748b' }}>
                 RAMS AGENTIC MENTOR SYSTEM // AZURE GPT-REALTIME
               </div>
