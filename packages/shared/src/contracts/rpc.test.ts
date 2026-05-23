@@ -30,7 +30,7 @@ describe('rpc contracts', () => {
   });
 
   it('exports RPC_METHODS constants', () => {
-    expect(RPC_METHODS.SANDBOX_GET_STATE).toBe('sandbox.getState');
+    expect(RPC_METHODS.SANDBOX_GET_STATE).toBe('read_sandbox_state');
     expect(RPC_METHODS.SANDBOX_RUN_COMMAND).toBe('sandbox.runCommand');
   });
 });

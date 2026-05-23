@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const RawSessionEventSchema = z.object({
   sessionId: z.string().min(1),
   timestamp: z.string().datetime(),
-  type: z.string(),
+  type: z.string().min(1),
   payload: z.unknown().default({}),
 });
 

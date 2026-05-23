@@ -7,7 +7,7 @@ export const apiEnvSchema = z.object({
   LIVEKIT_WS_URL: url,
   LIVEKIT_API_KEY: required,
   LIVEKIT_API_SECRET: required,
-  API_PORT: z.coerce.number().default(8787),
+  API_PORT: z.coerce.number().int().min(1).max(65535).default(8787),
   EVENTS_DIR: z.string().default('data/session-events'),
   RAMS_SHARED_SECRET: required,
 });
@@ -50,10 +50,10 @@ export const WebEnvSchema = webEnvSchema;
 
 function preprocessEnv(env: Record<string, string | undefined>) {
   const wsUrl = env.LIVEKIT_WS_URL || env.LIVEKIT_URL;
-  const cleanWsUrl = wsUrl ? wsUrl.replace(/^['"]|['"]$/g, '').trim() : undefined;
+  const cleanWsUrl = wsUrl ? wsUrl.trim().replace(/^['"]|['"]$/g, '').trim() : undefined;
   
-  const cleanApiKey = env.LIVEKIT_API_KEY ? env.LIVEKIT_API_KEY.replace(/^['"]|['"]$/g, '').trim() : undefined;
-  const cleanApiSecret = env.LIVEKIT_API_SECRET ? env.LIVEKIT_API_SECRET.replace(/^['"]|['"]$/g, '').trim() : undefined;
+  const cleanApiKey = env.LIVEKIT_API_KEY ? env.LIVEKIT_API_KEY.trim().replace(/^['"]|['"]$/g, '').trim() : undefined;
+  const cleanApiSecret = env.LIVEKIT_API_SECRET ? env.LIVEKIT_API_SECRET.trim().replace(/^['"]|['"]$/g, '').trim() : undefined;
 
   return {
     ...env,

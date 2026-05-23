@@ -29,6 +29,7 @@ OPENAI_API_VERSION=2025-04-01-preview
 - `MENTOR_MODE=philosophy` → RAMS becomes a philosophy mentor and does **not** register sandbox tools
 - Default realtime deployment is now `gpt-realtime-mini`
 
+
 ---
 
 ## MVP-1 verification

@@ -15,6 +15,23 @@ describe('runtime env schemas', () => {
     expect(result.API_PORT).toBe(8787);
   });
 
+  it('rejects API_PORT outside of valid TCP port range', () => {
+    const baseEnv = {
+      LIVEKIT_WS_URL: 'wss://example.livekit.cloud',
+      LIVEKIT_API_KEY: 'key',
+      LIVEKIT_API_SECRET: 'secret',
+      EVENTS_DIR: 'data/session-events',
+      RAMS_SHARED_SECRET: 'test-secret',
+    };
+
+    expect(() => apiEnvSchema.parse({ ...baseEnv, API_PORT: '0' })).toThrow();
+    expect(() => apiEnvSchema.parse({ ...baseEnv, API_PORT: '65536' })).toThrow();
+    expect(() => apiEnvSchema.parse({ ...baseEnv, API_PORT: '-1' })).toThrow();
+    
+    expect(apiEnvSchema.parse({ ...baseEnv, API_PORT: '1' }).API_PORT).toBe(1);
+    expect(apiEnvSchema.parse({ ...baseEnv, API_PORT: '65535' }).API_PORT).toBe(65535);
+  });
+
   it('defaults Azure realtime deployment and mentor mode', () => {
     const result = agentEnvSchema.parse({
       LIVEKIT_WS_URL: 'wss://example.livekit.cloud',
@@ -87,5 +104,31 @@ describe('runtime env schemas', () => {
     const result = parseWebEnv({});
 
     expect(result.VITE_API_BASE_URL).toBe('http://localhost:8787');
+  });
+
+  describe('preprocessEnv compatibility and cleaning', () => {
+    it('uses LIVEKIT_URL as fallback for LIVEKIT_WS_URL', () => {
+      const result = parseAgentEnv({
+        LIVEKIT_URL: 'wss://fallback.livekit.cloud',
+        LIVEKIT_API_KEY: 'key',
+        LIVEKIT_API_SECRET: 'secret',
+        AZURE_OPENAI_ENDPOINT: 'https://example.openai.azure.com',
+        AZURE_OPENAI_API_KEY: 'azure-key',
+      });
+      expect(result.LIVEKIT_WS_URL).toBe('wss://fallback.livekit.cloud');
+    });
+
+    it('cleans quotes and whitespace from environment variables', () => {
+      const result = parseAgentEnv({
+        LIVEKIT_WS_URL: ' "wss://quoted.livekit.cloud" ',
+        LIVEKIT_API_KEY: " 'key-with-quotes' ",
+        LIVEKIT_API_SECRET: ' "secret-with-quotes" ',
+        AZURE_OPENAI_ENDPOINT: 'https://example.openai.azure.com',
+        AZURE_OPENAI_API_KEY: 'azure-key',
+      });
+      expect(result.LIVEKIT_WS_URL).toBe('wss://quoted.livekit.cloud');
+      expect(result.LIVEKIT_API_KEY).toBe('key-with-quotes');
+      expect(result.LIVEKIT_API_SECRET).toBe('secret-with-quotes');
+    });
   });
 });

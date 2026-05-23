@@ -26,7 +26,7 @@ export const ReadSandboxStateRequestSchema = z.object({
 
 // RPC method constants
 export const RPC_METHODS = {
-  SANDBOX_GET_STATE: 'sandbox.getState',
+  SANDBOX_GET_STATE: 'read_sandbox_state',
   SANDBOX_RUN_COMMAND: 'sandbox.runCommand',
 } as const;
 
