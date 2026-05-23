@@ -19,8 +19,10 @@ export function useHandoffBootstrap(apiBaseUrl: string) {
         const data = await bootstrapSession(apiBaseUrl, handoffToken);
         setBootstrapData(data);
 
-        // Clean URL after success
-        const cleanUrl = window.location.pathname + window.location.hash;
+        // Clean URL after success: remove only handoff query param, preserving others and hash
+        const urlObj = new URL(window.location.href);
+        urlObj.searchParams.delete('handoff');
+        const cleanUrl = urlObj.pathname + urlObj.search + urlObj.hash;
         window.history.replaceState({}, document.title, cleanUrl);
       } catch (err: any) {
         console.error('Handoff bootstrap error:', err);

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Room, RoomEvent, Track } from 'livekit-client';
 import { fetchLiveKitToken } from '../lib/api';
 
@@ -13,6 +13,7 @@ export interface UseVoiceRoomOptions {
 export function useVoiceRoom({ apiBaseUrl, roomName, identity }: UseVoiceRoomOptions) {
   const [status, setStatus] = useState<RoomConnectionStatus>('idle');
   const [error, setError] = useState<string | null>(null);
+  const isConnectingRef = useRef(false);
 
   // Memoize Room instance to ensure we only have one
   const room = useMemo(() => {
@@ -55,10 +56,13 @@ export function useVoiceRoom({ apiBaseUrl, roomName, identity }: UseVoiceRoomOpt
   }, [room]);
 
   const connect = async (overrideLiveKit?: { url: string; token: string }) => {
-    if (status === 'connecting' || status === 'connected') return;
+    if (isConnectingRef.current || status === 'connecting' || status === 'connected') return;
 
+    isConnectingRef.current = true;
     setStatus('connecting');
     setError(null);
+
+    let didConnectRoom = false;
 
     try {
       let wsUrl: string;
@@ -74,11 +78,22 @@ export function useVoiceRoom({ apiBaseUrl, roomName, identity }: UseVoiceRoomOpt
       }
 
       await room.connect(wsUrl, token);
+      didConnectRoom = true;
+
       await room.localParticipant.setMicrophoneEnabled(true);
       setStatus('connected');
     } catch (err: any) {
+      if (didConnectRoom) {
+        try {
+          await room.disconnect();
+        } catch (discErr) {
+          // ignore disconnect error
+        }
+      }
       setError(err instanceof Error ? err.message : String(err));
       setStatus('error');
+    } finally {
+      isConnectingRef.current = false;
     }
   };
 

@@ -4,6 +4,11 @@ import { SandboxState, SandboxFile, SandboxStateSchema, ReadSandboxStateRequest 
 let globalBootPromise: Promise<WebContainer> | null = null;
 let globalWebContainer: WebContainer | null = null;
 
+export function resetGlobalWebContainer() {
+  globalBootPromise = null;
+  globalWebContainer = null;
+}
+
 export class SandboxClient {
   private files: Map<string, string> = new Map();
   private stdoutTail = '';
@@ -28,18 +33,24 @@ export class SandboxClient {
     }
 
     globalBootPromise = (async () => {
-      const instance = await WebContainer.boot();
-      globalWebContainer = instance;
+      try {
+        const instance = await WebContainer.boot();
+        globalWebContainer = instance;
 
-      // Ensure directory /src recursive
-      await instance.fs.mkdir('/src', { recursive: true });
+        // Ensure directory /src recursive
+        await instance.fs.mkdir('/src', { recursive: true });
 
-      // Sync existing memory files to the webcontainer
-      for (const [path, content] of this.files.entries()) {
-        await instance.fs.writeFile(path, content);
+        // Sync existing memory files to the webcontainer
+        for (const [path, content] of this.files.entries()) {
+          await instance.fs.writeFile(path, content);
+        }
+
+        return instance;
+      } catch (err) {
+        globalBootPromise = null;
+        globalWebContainer = null;
+        throw err;
       }
-
-      return instance;
     })();
 
     return globalBootPromise;
@@ -87,9 +98,10 @@ export class SandboxClient {
           this.stdoutTail += chunk;
         },
       });
-      process.output.pipeTo(writableStdout).catch(() => {});
+      const pipePromise = process.output.pipeTo(writableStdout).catch(() => {});
 
       const code = await process.exit;
+      await pipePromise;
       this.exitCode = code;
       this.status = code === 0 ? 'completed' : 'failed';
       return code;

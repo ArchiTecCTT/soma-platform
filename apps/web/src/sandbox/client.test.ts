@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SandboxClient } from './client';
+import { SandboxClient, resetGlobalWebContainer } from './client';
+import { WebContainer } from '@webcontainer/api';
 
 // Keep mocks hoisted or declared with vi.hoisted to be referenced safely inside vi.mock
 const { mockSpawn, mockFs, mockWebContainerInstance } = vi.hoisted(() => {
@@ -26,6 +27,7 @@ vi.mock('@webcontainer/api', () => {
 describe('SandboxClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetGlobalWebContainer();
   });
 
   it('boots, synchronizes, runs code and snapshots state', async () => {
@@ -68,5 +70,22 @@ describe('SandboxClient', () => {
     expect(state.activeFilePath).toBe('/src/index.js');
     expect(state.stdoutTail).toBe('1');
     expect(state.status).toBe('completed');
+  });
+
+  it('resets global boot promise on initialization failure', async () => {
+    // Force boot to fail once
+    const originalBoot = WebContainer.boot;
+    WebContainer.boot = vi.fn().mockRejectedValueOnce(new Error('Boot failed'));
+
+    const client = new SandboxClient();
+    await expect(client.init()).rejects.toThrow('Boot failed');
+
+    // Restore boot and try again to prove it was reset and can succeed
+    WebContainer.boot = vi.fn().mockResolvedValue(mockWebContainerInstance);
+    const instance = await client.init();
+    expect(instance).toBe(mockWebContainerInstance);
+
+    // Restore original boot
+    WebContainer.boot = originalBoot;
   });
 });
