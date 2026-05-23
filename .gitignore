@@ -11,3 +11,5 @@ data/session-events/*.jsonl
 !data/session-events/.gitkeep
 apps/api/data/session-events/*.jsonl
 !apps/api/data/session-events/.gitkeep
+
+docs/sovereign-mind/

@@ -39,17 +39,18 @@
 
 ### Q2. How do we prevent prompt-injection attacks from executing unauthorized drop or alter commands through the SQL Gate?
 
-**Answer:** We enforce security boundaries through separate database connection pooling (segregating read-only and write actions), defensive database runtime compilation flags, and an AST validation layer that blocks all Data Definition Language (DDL) keywords before reaching the engine.
+**Answer:** Treat SQL-gate safety as a layered authorization problem, not as something a single SQLite flag solves. Use separate read/write identities, an allowlisted AST, and engine-level authorization hooks. In SQLite, `SQLITE_DBCONFIG_DEFENSIVE` is useful hardening, but it is not by itself a complete DDL veto mechanism.
 
 **Implement now:**
 1. Initialize separate SQLite/Postgres connection handles: `ro_pool` (guest read-only) and `rw_pool` (restricted read-write).
-2. For SQLite, compile with the `SQLITE_DBCONFIG_DEFENSIVE` flag enabled, preventing modifications to shadow tables or core database schemas during session queries.
-3. For Postgres, configure distinct database users (`readonly_user` vs `app_user`) and enforce strict schema privileges (`REVOKE ALL PRIVILEGES`).
-4. Apply an AST parsing middleware that scans all incoming JSON intent structures and explicitly rejects any operations mapped to blocked SQL keywords (e.g., `DROP`, `ALTER`, `CREATE`, `RENAME`, `TRUNCATE`).
+2. In SQLite, enable `SQLITE_DBCONFIG_DEFENSIVE` on the connection to harden against dangerous behaviors such as writable-schema abuse and direct writes to shadow tables, but do not rely on it alone to block all schema changes.
+3. Register `sqlite3_set_authorizer()` (or the equivalent engine-level authorization hook) to explicitly deny DDL and other forbidden operations such as `DROP`, `ALTER`, `CREATE`, `ATTACH`, and `PRAGMA` forms you do not allow.
+4. For Postgres, configure distinct database users (`readonly_user` vs `app_user`) and enforce strict schema privileges (`REVOKE ALL PRIVILEGES`, limited grants, optional RLS where it fits the data model).
+5. Apply an AST validation middleware that accepts only the small set of relational actions the product actually supports, rather than trying to blacklist every dangerous SQL keyword.
 
-**Recommended stack:** SQLite compiled with `SQLITE_DBCONFIG_DEFENSIVE`, Postgres Row-Level Security (RLS) policies, unprivileged database roles.
+**Recommended stack:** SQLite with `SQLITE_DBCONFIG_DEFENSIVE` plus `sqlite3_set_authorizer()`, Postgres least-privilege roles/RLS where appropriate, and an allowlisted AST compiler.
 
-**Why this over alternatives:** Relying on system prompts (e.g., "never execute write actions") is fragile and prone to jailbreaks. Implementing physical runtime barriers (such as separate connection pools and defensive database configuration flags) guarantees security even if the LLM is compromised.
+**Why this over alternatives:** Prompt instructions alone are fragile, and defensive-mode flags are only partial safeguards. Layered authorization at the AST, connection, and engine levels is materially stronger and remains valid even if the LLM output is hostile.
 
 **Caveats / scale trigger:** If transactional queries require writing back user analytics alongside reading, maintain two physically separate database files or instances (e.g., `app_state.db` read-write, `content.db` read-only) rather than sharing a single instance.
 
@@ -100,17 +101,18 @@
 
 ### Q5. What is the database migration protocol when a user adds a completely new custom field or topic directory to their workspace?
 
-**Answer:** We use an incremental, declarative migration protocol for core system schemas, combined with an indexed key-value table (or JSONB data column) to handle user-custom dynamic attributes without executing live SQL DDL migrations.
+**Answer:** Use transactional migrations for core product schema, and reserve EAV/JSON-style storage for sparse, user-defined fields that are not central to high-frequency filtering, sorting, or joins. Dynamic attributes are useful as an escape hatch, not as the long-term shape of heavily queried product data.
 
 **Implement now:**
 1. Define a core dynamic attributes table `workspace_attributes`: `id` (UUIDv4), `workspace_id` (UUID), `attribute_name` (TEXT), `attribute_value` (JSONB), and `created_at` (TIMESTAMP).
-2. Create index on attributes: `CREATE INDEX idx_workspace_attr_name ON workspace_attributes(workspace_id, attribute_name);`.
-3. When a user defines a new custom field (e.g., "Difficulty Rating" set to "Hard"), write this entry directly as a row inside `workspace_attributes` instead of altering physical column structures.
-4. If a structural schema update (like system tables) is required, deploy it via an incremental migration pipeline running transactional migrations inside application boot sequences.
+2. Create targeted indexes such as `CREATE INDEX idx_workspace_attr_name ON workspace_attributes(workspace_id, attribute_name);` and only add more expression/GIN-style indexing where query patterns justify it.
+3. When a user defines a rare custom field (e.g., "Difficulty Rating"), write it into `workspace_attributes` instead of immediately altering the physical schema.
+4. If a custom field becomes operationally important for dashboard filters, sorting, reporting, or joins, promote it into a typed first-class column through a normal transactional migration rather than forcing EAV forever.
+5. Keep system-table changes on a conventional migration pipeline executed at deploy/boot time, not as ad hoc runtime DDL from the product UI.
 
-**Recommended stack:** Prisma Schema migrations / Kysely migration runner, PostgreSQL JSONB / SQLite JSON1 extensions.
+**Recommended stack:** Prisma/Kysely migrations for core schema, PostgreSQL JSONB or SQLite JSON1 for sparse dynamic fields.
 
-**Why this over alternatives:** Executing live DDL commands (`ALTER TABLE ADD COLUMN`) in response to real-time client UI configurations causes write locks, risks schema desync, and increases the danger of database file corruption. Leveraging an indexed JSONB/EAV table handles custom user fields instantly with zero schema modifications.
+**Why this over alternatives:** Runtime DDL in response to end-user configuration is risky, but so is treating EAV/JSON storage as a universal answer. A hybrid policy preserves flexibility for rare custom fields while keeping heavily queried data relational and indexable.
 
 **Caveats / scale trigger:** When querying dynamic attributes across more than 500,000 rows causes performance bottlenecks, use a cron task to compile the dynamic keys, and execute a scheduled, non-blocking off-peak database migration to promote heavy keys to physical database columns.
 
@@ -160,17 +162,18 @@
 
 ### Q8. What metric determines whether data should live inside the local SQLite database or scale up to remote storage tiers?
 
-**Answer:** Data residency should be determined by asset size, write throughput, access patterns, offline requirements, and backup/recovery needs. Use policy thresholds as operational defaults, not as universal constants.
+**Answer:** Data placement should be driven by asset size, update frequency, access patterns, offline requirements, and backup strategy. Keep small structured state in SQLite; keep large binary assets and bulk archival data outside the main transactional file. Treat thresholds as deployment policies to tune, not as universal constants.
 
 **Implement now:**
 1. Build a storage router middleware inside the persistence framework.
-2. For all incoming records, inspect size and access pattern: small structured data (for example text, metadata, dynamic JSON) stays in SQLite; large binary assets (for example PDF books, uploaded audio, images) should generally live on local disk or object storage, with the file path and SHA-256 hash stored in SQLite.
-3. For streaming analytics (telemetry logs), monitor write frequencies: if writes exceed 50/sec, stream entries to a write-optimized in-memory log buffer, flushing to disk in batches every 5 seconds.
-4. Schedule a weekly consolidation script that flags database rows with a `last_accessed_at` timestamp older than 90 days, moving them to a remote S3 cold-storage tier and purging local cache tables.
+2. Keep small structured data (text, metadata, compact JSON) in SQLite. For large binary assets (PDFs, audio, images, large exports), prefer local disk or object storage, and store only metadata plus path/content hash in SQLite.
+3. Avoid letting very large text or blob payloads accumulate in hot SQLite tables. If a payload grows large enough to bloat frequently read pages or slow backup/checkpoint behavior, externalize it into block/object storage and keep the primary database compact.
+4. For streaming analytics (telemetry logs), batch writes or route them into a write-optimized buffer/log path before consolidating them into durable storage.
+5. Archive and tier cold data based on actual retention, disk, and offline requirements; do not assume one fixed age threshold is right for every deployment.
 
-**Recommended stack:** SQLite BLOB columns, AWS S3 / MinIO SDK, local filesystem mounting.
+**Recommended stack:** SQLite for transactional metadata, local filesystem or S3/MinIO-style object storage for large assets, optional bounded SQLite BLOB use for small offline-critical payloads.
 
-**Why this over alternatives:** Storing large binary files in a relational database triggers high database fragmentation, increases backup durations, and causes out-of-memory errors during large queries. Storing references on the filesystem and indexing metadata in SQLite preserves rapid database performance and portability.
+**Why this over alternatives:** Large assets inside the main relational file increase fragmentation, backup/checkpoint cost, and cache inefficiency. Keeping the hot SQLite database compact usually gives more predictable local performance while preserving portability.
 
 **Caveats / scale trigger:** For offline-first deployments, do not automatically archive to remote storage unless device disk space drops below 5%, in which case initiate aggressive local cache pruning.
 
@@ -222,17 +225,17 @@
 
 ### Q11. How do we chunk heterogeneous source materials (e.g., dense mathematical equations vs fluid philosophical prose) without losing structural context?
 
-**Answer:** We use an AST-aware semantic chunker that splits document elements based on markdown syntax, keeps equations and math blocks intact, and attaches dynamic context headers to each chunk.
+**Answer:** Use an AST-aware chunker that respects document structure and applies explicit no-split rules for fragile nodes such as math blocks, tables, code blocks, and lists. Token windows are still useful, but they must adapt to syntax boundaries rather than slicing through them.
 
 **Implement now:**
-1. Parse the document using a Markdown AST parser (such as `remark`), identifying text structures, list items, and code/math blocks.
-2. Group adjacent paragraphs into semantic chunks using a rolling token window (e.g., 512 tokens) with a 10% overlap, but force boundaries to align with paragraph breaks (`\n\n`) and headings.
-3. Keep LaTeX mathematical equations (wrapped in `$$ ... $$` or `\[ ... \]`) and Markdown tables completely intact within their original parent blocks.
-4. For each chunk, pre-pend a parent document locator tag: `Document: [Title] > Chapter: [Chapter] > Subsection: [Header] | Chunks: [content]`.
+1. Parse the document using a Markdown AST parser (such as `remark`), identifying headings, paragraphs, lists, code blocks, tables, and math nodes.
+2. Group adjacent prose into semantic chunks using a rolling token window (for example ~512 tokens with modest overlap), but force boundaries to align with paragraph breaks and headings.
+3. Mark LaTeX display math, block code, and tables as protected nodes: if a protected node would cross the token boundary, expand or contract the window so the node stays whole in one chunk.
+4. Attach lightweight provenance metadata to every chunk, such as document title and heading path, instead of relying only on raw text adjacency.
 
-**Recommended stack:** `remark` AST parser, `Tiktoken` token length counter.
+**Recommended stack:** `remark` plus relevant markdown/math plugins, with a tokenizer only as a sizing aid rather than the source of truth for boundaries.
 
-**Why this over alternatives:** Pure character-count chunking cuts equations, lists, and HTML tables in half, rendering them mathematically incorrect and confusing to LLMs. AST-based semantic chunking preserves structural context, and context headers prevent the LLM from losing background context on retrieved blocks.
+**Why this over alternatives:** Pure size-based chunking often tears equations, lists, or tables apart. Structural chunking with protected-node rules preserves meaning better and is more robust for technical material.
 
 **Caveats / scale trigger:** When parsing highly complex textbooks (>50MB), execute the AST parsing and chunking tasks inside multi-threaded background Web Workers to maintain a smooth 60fps UI.
 
@@ -242,20 +245,20 @@
 
 ### Q12. What specific hybrid retrieval formula balances keyword lexical matching (BM25) and dense vector embeddings (Cosine Similarity) for technical queries?
 
-**Answer:** We use Reciprocal Rank Fusion (RRF) to unify and rank results retrieved independently from keyword and vector indexes. A smoothing constant around $k = 60$ is a common default, but it should remain configurable.
+**Answer:** Use Reciprocal Rank Fusion (RRF) to combine lexical and vector retrieval without trying to normalize incompatible score scales. A constant around $k = 60$ is a common default from the literature, but it should be treated as a tunable parameter rather than a universal constant.
 
 **Implement now:**
-1. Execute a query against the BM25 index (using SQLite FTS5) to fetch the top-50 documents: $D_{BM25}$.
-2. Execute a vector search using cosine similarity (via pgvector/sqlite-vec) to fetch the top-50 documents: $D_{Vector}$.
+1. Execute a query against the BM25 index (using SQLite FTS5) to fetch a bounded lexical candidate set, such as top-20 to top-50 documents.
+2. Execute a vector search (for example via pgvector or sqlite-vec) to fetch a similarly bounded dense candidate set.
 3. Combine the retrieved results into a single list $D = D_{BM25} \cup D_{Vector}$.
 4. Calculate the consolidated score for each document $d \in D$:
    $$RRF\_Score(d) = \frac{1}{k + r_{BM25}(d)} + \frac{1}{k + r_{Vector}(d)}$$
-   where $r(d)$ is the document's rank position (1-indexed) in the respective search result lists. Set $r(d) = \infty$ if the document is not present in a search list.
-5. Sort the consolidated list in descending order of the RRF score.
+   where rank is 1-indexed and absent results contribute 0.
+5. Tune `k` and candidate-set sizes against real evaluation queries instead of freezing them from architecture notes alone.
 
-**Recommended stack:** SQLite FTS5, `sqlite-vec` or `pgvector` index, custom RRF utility function.
+**Recommended stack:** SQLite FTS5, `sqlite-vec` or `pgvector`, and a small custom RRF utility.
 
-**Why this over alternatives:** Direct score additions are invalid because BM25 scores (0 to $\infty$) and cosine similarity scores (-1 to 1) operate on completely different distributions. RRF uses relative rankings, providing a stable, scale-independent, and robust hybrid search ranking.
+**Why this over alternatives:** Direct score addition is unstable because BM25 and vector similarity live on different scales. RRF is robust precisely because it uses ranks, but production quality still depends on sensible candidate limits and parameter tuning.
 
 **Caveats / scale trigger:** If scoring execution latency exceeds 15ms during search, limit candidate imports to the top-30 entries from each search pipeline prior to running the fusion.
 
@@ -265,17 +268,17 @@
 
 ### Q13. At what explicit database size scale must the system migrate data from a Postgres/pgvector setup to a high-throughput columnar analytical engine like ClickHouse?
 
-**Answer:** Migrate analytical and large-scale retrieval workloads out of PostgreSQL when measured production behavior shows that filtered ANN search, ingest, or dashboard-style scans are harming OLTP responsiveness. There is no single authoritative row-count cutoff; use SLO misses, contention, and cost as the trigger.
+**Answer:** Keep PostgreSQL as the system of record for OLTP and pgvector-based retrieval while workloads meet transactional SLOs. Migrate event logging, analytical query streams, observability data, or other scan-heavy workloads to ClickHouse only when measured production behavior shows that those workloads are harming core transactional responsiveness. Do not assume one fixed dataset-size cutoff or full feature parity between pgvector-style retrieval and the analytical tier.
 
 **Implement now:**
 1. Enable `pg_stat_statements` and track p95/p99 latency for search, ingest, and user-facing transactional queries separately.
-2. Keep Postgres as system-of-record for OLTP and pgvector-based retrieval while workloads still meet targets.
+2. Keep Postgres as system-of-record for OLTP and primary retrieval while it still meets targets.
 3. When analytical scans begin competing with OLTP, replicate events or table changes into ClickHouse and model them with `MergeTree` tables plus materialized views where appropriate.
-4. Treat vector/ANN features in the target analytics tier as workload-specific and verify them against current vendor docs before adoption; do not assume a fixed feature set from older architecture notes.
+4. Treat ClickHouse primarily as an analytics/observability engine unless the exact vector/ANN features you need are confirmed in current vendor documentation for your workload.
 
 **Recommended stack:** PostgreSQL 16/17 + `pgvector` 0.8.x for transactional + primary retrieval workloads, ClickHouse for high-volume analytics/observability once Postgres no longer meets measured SLAs, and CDC or task-queue-based async replication.
 
-**Why this over alternatives:** Postgres excels at OLTP and can handle substantial vector workloads, but long analytical scans and heavy aggregation can still compete with transactional traffic. ClickHouse is designed for analytical workloads and incremental materialized-view pipelines, so it is a better fit once the bottleneck is proven in production.
+**Why this over alternatives:** Postgres handles OLTP plus moderate retrieval workloads well, but long analytical scans and heavy aggregation can still compete with transactional traffic. ClickHouse is designed for analytical pipelines and high-volume aggregation, so it is the better fit once the bottleneck is proven in production.
 
 **Caveats / scale trigger:** Keep transactional editor state and authoritative writes in SQLite/Postgres. Move read-heavy analytics and observability workloads to ClickHouse only after measuring benefit. Avoid assuming full transactional semantics in the analytical tier.
 
@@ -285,17 +288,17 @@
 
 ### Q14. What vector quantization approach (e.g., HNSW vs IVFFlat) preserves semantic recall accuracy while minimizing index memory footprint on the edge?
 
-**Answer:** Prefer HNSW for interactive high-recall retrieval when memory is acceptable; prefer IVFFlat when faster build times and lower memory matter more. Quantization is useful on edge devices, but the exact tradeoff must be validated on the target corpus and hardware.
+**Answer:** On servers, HNSW vs. IVFFlat is a practical pgvector tradeoff: HNSW usually favors recall/query performance, while IVFFlat usually favors lower memory and faster build time. On true edge targets (browser, WASM, mobile, embedded SQLite), do not assume those server-side tradeoffs transfer cleanly; smaller models, bounded corpora, and simpler indexes often win.
 
 **Implement now:**
 1. Generate embeddings locally and keep dimension count as small as the retrieval task allows.
-2. If using pgvector, prefer HNSW for best speed/recall tradeoff in most interactive workloads; use IVFFlat when you need lower memory use or faster build times.
-3. If using IVFFlat, create the index after loading representative data and tune `lists` plus `ivfflat.probes` based on measured recall/latency.
-4. If memory is tight, test quantized embeddings or smaller vector types in your chosen engine, then compare recall on a held-out query set before rollout.
+2. If using pgvector on a server, prefer HNSW for interactive high-recall workloads; use IVFFlat when memory/build-time constraints matter more and tune `lists` plus `ivfflat.probes` on representative data.
+3. For edge-local deployments with modest corpus sizes, start with flat/brute-force similarity or a lightweight local index before adopting memory-heavier ANN structures.
+4. If memory is tight, test quantized embeddings, smaller vector dimensions, or smaller local models, then compare recall on a held-out query set before rollout.
 
-**Recommended stack:** `pgvector` with HNSW or IVFFlat depending on measured workload, or an edge-friendly local vector index such as `sqlite-vec` where footprint matters.
+**Recommended stack:** `pgvector` with HNSW or IVFFlat for server-side retrieval; lightweight local indexes such as `sqlite-vec` or brute-force search for smaller edge corpora.
 
-**Why this over alternatives:** The current pgvector guidance is explicit: HNSW generally has better query performance than IVFFlat, while IVFFlat has faster build times and lower memory use. That makes the choice practical and measurable rather than theoretical.
+**Why this over alternatives:** The pgvector documentation gives a useful server-side tradeoff, but edge constraints are different enough that a simpler local index is often more implementable and easier to reason about.
 
 **Caveats / scale trigger:** Do not hard-code one ANN strategy for all deployments. For edge deployments, benchmark memory, build time, and top-k recall on representative hardware before freezing defaults.
 
@@ -326,17 +329,17 @@
 
 ### Q16. What reranker model (e.g., a lightweight Cross-Encoder) will verify RAG results for factual alignment without blowing past your sub-100ms latency budget?
 
-**Answer:** Use a local reranker only if it actually meets your latency budget on representative hardware. WebGPU and WebNN can help in browsers, but support is platform-dependent, so keep a server-side or WASM fallback.
+**Answer:** Use a local reranker only if it meets the latency budget on representative hardware. In browsers, treat execution-provider selection as a capability-detection ladder: try WebGPU first where supported, optionally try WebNN on platforms that actually expose it, and keep a WASM and/or server-side fallback.
 
 **Implement now:**
 1. Export the reranker to ONNX and benchmark it in the exact runtime you plan to ship.
-2. In browsers, prefer `ONNX Runtime Web` with WebGPU when available; consider WebNN where supported; otherwise fall back to WASM.
+2. In browsers, initialize `ONNX Runtime Web` with explicit feature detection: try WebGPU first, then WebNN only when the platform/runtime actually supports it, and finally fall back to WASM.
 3. On servers, use native ONNX Runtime execution providers appropriate to the host.
-4. Benchmark end-to-end reranking latency over realistic candidate counts before setting a production threshold.
+4. Benchmark end-to-end reranking latency over realistic candidate counts and device classes before declaring a production budget.
 
-**Recommended stack:** `ONNX Runtime Web` with WebGPU/WebNN where available, plus server-side ONNX Runtime fallback for unsupported browsers or slower devices.
+**Recommended stack:** `ONNX Runtime Web` with explicit WebGPU/WebNN/WASM fallback ordering, plus server-side ONNX Runtime for unsupported browsers or slower clients.
 
-**Why this over alternatives:** ONNX Runtime officially supports both WebGPU and WebNN in the web runtime, but browser support is not universal. A portable fallback path is required for an implementable system.
+**Why this over alternatives:** ONNX Runtime supports multiple browser execution providers, but support is fragmented across browsers and hardware. A capability-driven fallback chain is more realistic than assuming one accelerator path will always exist.
 
 **Caveats / scale trigger:** Do not promise a fixed sub-100ms rerank budget across all clients. Treat it as a target validated per device class and candidate count.
 
@@ -432,17 +435,17 @@
 
 ### Q21. How do we model evolving time-based dependencies between concepts inside Neo4j without causing a massive explosion of graph edges?
 
-**Answer:** Store validity or version metadata on relationships when the conceptual structure is mostly stable, and reserve full versioned subgraphs for cases where the topology itself changes materially across editions.
+**Answer:** Use relationship-level temporal/version metadata only when the graph topology is mostly stable and the runtime queries are shallow. For denser or heavily time-filtered traversals, prefer version-scoped overlays, precomputed prerequisite sets, or relational side tables rather than assuming temporal predicates on every traversed edge will stay cheap.
 
 **Implement now:**
 1. Keep canonical concept nodes stable.
-2. Add temporal properties to dependency relationships, preferably using Neo4j temporal value types rather than opaque integers when practical.
-3. Query only active relationships with temporal predicates, and filter as early as possible in the query plan.
-4. If a curriculum revision changes many edges at once, create a source/version-scoped overlay instead of rewriting every historical edge in place.
+2. Add temporal properties to dependency relationships when you need lightweight history and the hot-path queries remain shallow.
+3. Query only active relationships with temporal predicates, inspect execution plans, and validate cost on realistic graph density.
+4. If curriculum revisions change many edges or temporal filtering becomes performance-critical, create source/version-scoped overlays or precomputed active dependency sets instead of depending on property filters across deep traversals.
 
-**Recommended stack:** Neo4j 5.x with temporal properties and query-plan inspection; APOC only when you need procedures beyond core Cypher.
+**Recommended stack:** Neo4j 5.x with temporal properties for modest history needs, plus overlay/precompute strategies when temporal filtering becomes a hot-path concern.
 
-**Why this over alternatives:** Relationship-level temporal metadata is simpler than cloning large portions of the graph for every small revision, while still preserving enough history for time-aware traversal.
+**Why this over alternatives:** Relationship metadata is simpler than cloning the world for every small edit, but it is not free. Structural partitioning or precomputation becomes safer once temporal predicates start dominating runtime traversals.
 
 **Caveats / scale trigger:** Inspect execution plans and indexes before adding more complexity. If temporal filtering becomes hot-path critical, precompute active overlays or cache resolved prerequisite sets.
 
@@ -452,17 +455,17 @@
 
 ### Q22. What is the maximum graph traversal hop depth allowed during real-time conversational validation to ensure sub-10ms veto checks?
 
-**Answer:** There is no universal maximum hop count that guarantees a fixed latency. In practice, keep online prerequisite checks shallow—often 1 to 2 hops—and precompute deeper dependency summaries offline.
+**Answer:** There is no universal hop count that guarantees a fixed latency. For real-time veto logic, keep live graph checks shallow—often direct prerequisites or one extra hop—and treat deeper dependency reasoning as a precomputed cache or summary problem rather than a per-request traversal problem.
 
 **Implement now:**
 1. Limit synchronous veto checks to the smallest depth that answers the product question, usually direct prerequisites or one extra hop.
 2. Use bounded variable-length patterns rather than unconstrained traversals.
-3. Cache prerequisite closures or reduced dependency summaries for hot concepts.
-4. Inspect execution plans and enforce application-level deadlines; if the graph cannot answer cheaply enough, serve from cache.
+3. Precompute prerequisite closures or reduced dependency summaries for hot concepts, and store them in a cache or relational lookup path that is cheaper than a fresh deep traversal.
+4. Inspect execution plans and enforce application-level deadlines; if the graph cannot answer cheaply enough, serve the veto decision from cache and use Neo4j as the background authority that refreshes those summaries.
 
-**Recommended stack:** Bounded Cypher traversals, query-plan inspection, and cache-backed prerequisite summaries.
+**Recommended stack:** Bounded Cypher traversals for shallow checks, plus cache-backed or relational prerequisite summaries for hot-path veto logic.
 
-**Why this over alternatives:** Traversal cost depends on graph density, indexing, and query shape, not hop count alone. Shallow online checks plus offline precomputation are more reliable than promising one global depth budget.
+**Why this over alternatives:** Traversal cost depends on graph density, branching factor, and query shape, not hop count alone. Shallow online checks plus precomputed summaries are more realistic than promising deep live traversals under a fixed latency budget.
 
 **Caveats / scale trigger:** If the curriculum graph gets dense or highly branching, move from live multi-hop checks to precomputed closures and invalidate them when the curriculum changes.
 
@@ -724,20 +727,21 @@
 
 ### Q35. How do we cache compiled WebAssembly or JavaScript binaries so dynamic sandboxes open instantly during repeat visits?
 
-**Answer:** We cache parsed and compiled WASM modules and JS bundles inside the browser's native Cache Storage API or IndexedDB as raw binaries, bypassing network and compilation latency.
+**Answer:** Cache raw `.wasm` responses and generated JS bundles in Cache Storage or IndexedDB so repeat visits avoid repeated network fetches. Do not assume you can persist fully compiled `WebAssembly.Module` objects portably across browser sessions; the reliable baseline is caching raw bytes/responses and recompiling or instantiating from those cached artifacts.
 
 **Implement now:**
-1. Cache the fetched `.wasm` bytes and any generated JS bundles in Cache Storage or IndexedDB so repeat visits avoid repeated network fetches.
-2. Write the binary buffer directly into the browser's Cache Storage:
+1. Cache the fetched `.wasm` bytes and generated JS bundles in Cache Storage or IndexedDB so repeat visits avoid repeated network fetches.
+2. Write the raw response into Cache Storage:
    ```javascript
    const cache = await caches.open('wasm-cache');
    await cache.put('/modules/my_module.wasm', new Response(wasmBuffer));
    ```
-3. On repeat visits, load the cached bytes first and then compile/instantiate them again if the runtime cannot reuse a previously compiled representation.
+3. On repeat visits, load the cached response first and instantiate/compile from the cached bytes; use streaming APIs when available.
+4. Manage freshness and eviction explicitly with versioned cache keys and cleanup logic; browser storage is not infinite and retention is not guaranteed forever.
 
 **Recommended stack:** WebAssembly JS APIs, Cache Storage API, and IndexedDB for larger artifact catalogs.
 
-**Why this over alternatives:** Re-downloading and recompiling raw WASM binaries on every refresh wastes CPU and bandwidth. Caching module bytes and other build artifacts reduces startup work, but the exact load-time improvement depends on browser support, payload size, and whether the platform can reuse compiled artifacts.
+**Why this over alternatives:** Re-downloading raw WASM binaries on every refresh wastes CPU and bandwidth. Caching raw responses and other build artifacts reduces startup work without depending on non-portable assumptions about compiled-module persistence.
 
 **Caveats / scale trigger:** Browsers enforce strict storage quotas on IndexedDB/Cache API (often 10%-50% of free disk). Implement an LRU (Least Recently Used) cache eviction routine to prune old compilation bundles when cache size exceeds 200MB.
 
@@ -747,17 +751,18 @@
 
 ### Q36. What mechanism handles hot-reloading state synchronization between the student's workspace and the background compilation process?
 
-**Answer:** We implement an in-browser bundling pipeline that recompiles changed modules in a worker or equivalent background context, while a Service Worker or preview server intercepts module fetches and a postMessage bridge coordinates hot updates.
+**Answer:** Use an in-browser bundling pipeline that recompiles changed modules in a worker or equivalent background context, while a Service Worker or preview server intercepts module fetches and a message bridge coordinates hot updates. Treat state preservation as opportunistic rather than guaranteed: some edits can hot-swap cleanly, while others still require remounts or full reloads.
 
 **Implement now:**
-1. Register a custom Service Worker scoped to the sandbox iframe directory.
-2. When the user edits a file, the editor updates the memory file system (VFS).
-3. The Service Worker intercepts all network requests (e.g., `import './App.js'`) and serves the compiled JSX/TSX dynamically from the VFS rather than hitting the network.
-4. To swap modules without page refreshes, send a postMessage event containing the modified module code. The iframe runtime receives it, updates the cache, and triggers a dynamic re-import (`import('./App.js?update=' + Date.now())`) to hot-swap components.
+1. Register a custom Service Worker scoped to the sandbox iframe directory, or use a preview server path when Service Worker behavior becomes too intrusive during development.
+2. When the user edits a file, update the memory file system (VFS).
+3. Intercept module fetches and serve compiled JSX/TSX dynamically from the VFS rather than hitting the network.
+4. To swap modules without full page refreshes, send a message containing the modified module code and trigger a cache-busting dynamic re-import (for example `import('./App.js?update=' + Date.now())`).
+5. Document development-mode pitfalls such as stale Service Worker state, cache interference, or tool-specific reload loops, and provide an escape hatch to force a clean reload.
 
-**Recommended stack:** Service Workers, `esbuild-wasm` or an equivalent browser bundler running in a worker, and dynamic imports.
+**Recommended stack:** Service Workers or preview-server interception, `esbuild-wasm` or an equivalent browser bundler running in a worker, and dynamic imports.
 
-**Why this over alternatives:** Full page reloads wipe app state and cause visual flicker. Background recompilation plus dynamic module replacement can preserve state and improve perceived responsiveness, but the exact hot-reload latency depends on dependency graph size, bundling strategy, and browser behavior.
+**Why this over alternatives:** Full page reloads wipe app state and cause visual flicker. Background recompilation plus dynamic module replacement can often preserve state and improve perceived responsiveness, but the exact result depends on dependency graph size, bundling strategy, and browser behavior.
 
 **Caveats / scale trigger:** If import dependency graphs are too deep (>100 files), single-file hot reloading can cause waterfall fetch delays. Mitigate this by bundling dependencies into a single bundle via a fast worker-side compiler like `esbuild-wasm`.
 
@@ -832,18 +837,17 @@
 
 ### Q40. What is the graceful recovery path if the generative interface encounters an unrecoverable infinite loop or out-of-memory crash?
 
-**Answer:** We implement an execution monitoring system: run sandboxed code inside an isolated iframe, monitor execution loop limits using transpiler-injected heartbeat counters, and force-kill crashed frames.
+**Answer:** Use layered containment rather than assuming the browser can always recover gracefully. Run sandboxed code inside an isolated iframe or worker boundary, inject cooperative loop limits where possible, and provide parent-side watchdog/restart logic. Treat recovery as best-effort: some synchronous freezes or out-of-memory failures can still leave control to the browser process, not your app.
 
 **Implement now:**
-1. Prior to compiling, compile user loops (e.g., `while`, `for`) using a Babel plugin that injects a runtime execution timeout hook:
-   `while(cond) { _checkLoopLimit(); [body] }`.
-2. The injected `_checkLoopLimit()` function counts executions and elapsed time. If the runtime exceeds a configured loop or time budget, it throws an `InfiniteLoopError`.
-3. If the page freezes completely (OOM or an unintercepted loop), the parent monitors the frame using a heartbeat poll: if the iframe stops responding within the configured timeout window, flag a crash.
-4. Parent UI shows a crash overlay ("Sandbox frozen"), unmounts the crashed iframe, resets the virtual state, and re-instantiates a clean iframe with code modifications suggested to avoid the loop.
+1. Prior to compiling, transform user loops (e.g., `while`, `for`) using a Babel plugin that injects a runtime execution timeout hook such as `_checkLoopLimit()`.
+2. The injected function counts executions and elapsed time. If the runtime exceeds a configured loop or time budget, throw an explicit loop-exhaustion error.
+3. Prefer executing heavy or untrusted compute paths in workers where termination is more reliable than trying to recover from a blocked main thread.
+4. If the sandbox stops responding, show a crash overlay, tear down the affected iframe/worker if possible, and re-instantiate a clean runtime with recovery guidance.
 
-**Recommended stack:** Babel transpiler with loop-check plugins, Parent window heartbeat scheduler.
+**Recommended stack:** Babel transpiler with loop-check plugins, isolated iframe/worker execution, and parent-side watchdog/restart logic.
 
-**Why this over alternatives:** Browsers can become unresponsive when runaway code monopolizes execution. Transpiler-level loop guards and parent-driven recovery provide a practical containment strategy, but no browser-side mechanism can promise perfect responsiveness under every pathological failure mode.
+**Why this over alternatives:** Runaway code can monopolize execution and make the browser unresponsive. Transpiler-level loop guards plus parent-driven recovery provide a practical containment strategy, but no browser-side mechanism can guarantee perfect responsiveness under every pathological failure mode.
 
 **Caveats / scale trigger:** Ensure loop check injections do not slow down high-performance graphics code (like Canvas games). Disable checks on high-performance render loops once code is marked as safe.
 
@@ -938,17 +942,17 @@
 
 ### Q45. How do we limit browser-side WebContainer or Pyodide resource usage on lower-end mobile devices to avoid UI freezing?
 
-**Answer:** We execute WebContainer or Pyodide runtimes strictly inside Web Workers running on background threads, implementing resource-limit throttles and tracking thread response latencies.
+**Answer:** Run WebContainer or Pyodide workloads off the main UI thread whenever possible, and treat resource control as cooperative rather than absolute. Web Workers protect UI responsiveness much better than main-thread execution, but they do not provide strict per-task CPU or memory quotas like a server-side sandbox would.
 
 **Implement now:**
-1. Instantiate the Pyodide/WebContainer runtime strictly inside a dedicated Web Worker: `new Worker('pyodide-worker.js')`.
-2. Track execution using a watchdog timer inside the main UI thread. If a user code execution task fails to yield or complete within the configured budget, warn the user and offer cancellation or remote fallback.
-3. Force thread cooling by injecting execution sleep breaks inside python scripts using Pyodide's run API or limiting execution intervals to debounced clicks.
-4. If the mobile device's core memory count is low (`navigator.hardwareConcurrency <= 2`), automatically switch execution to a remote server-side sandbox instead of browser execution.
+1. Instantiate the Pyodide/WebContainer runtime inside a dedicated Web Worker when the platform supports that execution model.
+2. Track execution using a watchdog timer in the main UI thread. If a task fails to yield or complete within the configured budget, warn the user and offer cancellation, worker termination, or remote fallback.
+3. Reduce local pressure with bounded workloads, debounced execution, smaller datasets/models, and device-class heuristics rather than assuming browser-native throttling exists.
+4. If the device appears too constrained (for example low `navigator.hardwareConcurrency`, memory pressure, or repeated watchdog trips), switch to a remote server-side sandbox instead of persisting with local execution.
 
-**Recommended stack:** HTML5 Web Workers, browser Hardware Concurrency API.
+**Recommended stack:** HTML5 Web Workers, browser capability heuristics, and remote fallback for constrained devices.
 
-**Why this over alternatives:** Running heavy runtimes on the main UI thread blocks the browser's paint loop and can make the interface unresponsive. Offloading work to background workers protects the UI much better, but long-running or CPU-saturating tasks can still degrade the overall device experience.
+**Why this over alternatives:** Running heavy runtimes on the main UI thread blocks rendering and can make the interface unresponsive. Background workers improve isolation, but long-running or CPU-saturating tasks can still degrade the overall device experience, so termination and fallback paths remain necessary.
 
 **Caveats / scale trigger:** Web Workers cannot fully limit raw CPU consumption if a process executes a synchronous loop. Injected heartbeat check-ins remain necessary inside the compiled scripts to allow thread termination.
 
@@ -2326,18 +2330,17 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q108. How does the system interpret micro-deletions (backspacing) to distinguish between a simple typo and conceptual uncertainty?
 
-**Answer:** Calculate the Levenshtein distance between the deleted text and the replacement text relative to duration.
+**Answer:** Treat backspacing as a weak behavioral signal, not as a license to capture raw keystroke content broadly. Prefer timing- and edit-pattern features first; if text-difference analysis is ever used, keep it strictly local, ephemeral, and excluded from sensitive fields.
 
 **Implement now:**
-1. Keep a rolling 10-second buffer of typed characters and timestamps.
-2. When backspaces are detected, record the deleted string $S_d$ and the subsequent replacement string $S_r$.
-3. Compute the Levenshtein distance $D_L(S_d, S_r)$.
-4. If $D_L \le 2$ and the correction occurs within 800ms, classify as a "simple typo".
-5. If $D_L > 2$ or the pause before replacement is $>1.5$ seconds, classify as "conceptual uncertainty/restructuring".
+1. Track non-sensitive edit telemetry first: backspace bursts, pause duration, replacement timing, and edit-span size.
+2. Avoid persisting raw typed-character buffers. If text-difference analysis is necessary, keep the buffer ephemeral, local-only, and out of password/payment/sensitive-input contexts.
+3. When backspaces are detected, compare the deleted span and replacement span locally to distinguish tiny typo corrections from larger rewrites.
+4. Use the result as a probabilistic feature in a broader uncertainty model rather than a hard truth label.
 
-**Recommended stack:** WASM-compiled Levenshtein distance function, customized keyboard buffer classes.
+**Recommended stack:** Local-only edit telemetry, optional local diff/Levenshtein utilities, and strict exclusion of sensitive input contexts.
 
-**Why this over alternatives:** Counting raw backspaces triggers false confusion flags during normal fast typing, whereas Levenshtein ratios accurately isolate structural revisions from spelling corrections.
+**Why this over alternatives:** Raw keystroke capture creates privacy and security risk. Behavioral edit features still give useful signal while keeping the system closer to data-minimization principles.
 
 **Caveats / scale trigger:** For programming sandboxes, ignore indentations (spaces/tabs) when calculating deletion distance.
 
@@ -2872,17 +2875,18 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q135. How does Rector track prerequisites across an open-ended graph without enforcing strict linear gating?
 
-**Answer:** Implement a Bayesian Knowledge Tracing (BKT) probability matrix coupled with recursive graph searches.
+**Answer:** Implement prerequisite tracking as a probabilistic readiness model coupled with recursive graph searches, but treat the exact unlock threshold as a product policy that must be validated against learner outcomes rather than as a canonical BKT constant.
 
 **Implement now:**
 1. For every node $N$ in the curriculum graph, assign a mastery probability $P(M_N) \in [0.0, 1.0]$.
 2. When a student requests a lesson $L$, run a recursive CTE query to fetch all prerequisite concepts $R_i$.
-3. Calculate the composite readiness score: $R_{composite} = \prod P(M_{R_i})$.
-4. If $R_{composite} \ge 0.70$, unlock the lesson. If $R_{composite} < 0.70$, instead of blocking the lesson, inject a micro-diagnostic challenge to dynamically test and calibrate prerequisite gaps.
+3. Calculate a composite readiness score from the prerequisite mastery estimates.
+4. If readiness clears the configured threshold, unlock the lesson; otherwise, inject a micro-diagnostic challenge to test and calibrate prerequisite gaps instead of hard-blocking immediately.
+5. Choose and tune the threshold from observed student success rates. If you align closely with classical BKT-style mastery gating, expect a higher threshold than 0.70.
 
-**Recommended stack:** SQLite recursive Common Table Expressions (CTEs), BKT modeling script.
+**Recommended stack:** SQLite recursive Common Table Expressions (CTEs) and a calibrated BKT-style mastery model.
 
-**Why this over alternatives:** Strict gating forces redundant exercises, while no gating leaves students lost, whereas probabilistic tracking unlocks learning based on demonstrable competency.
+**Why this over alternatives:** Strict gating forces redundant exercises, while no gating leaves students lost. Probabilistic tracking is a practical middle ground, but the threshold should be empirically tuned rather than treated as universal.
 
 **Caveats / scale trigger:** If a student passes the diagnostic challenge with high marks, instantly update all prerequisite mastery probabilities $P(M_{R_i})$ to 0.85.
 
@@ -2905,7 +2909,7 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 **Why this over alternatives:** Fixed schedulers inject cross-domain challenges at awkward, disruptive moments, whereas flow-aware bandits maximize cognitive retention and creative transfer.
 
-**Caveats / scale trigger:** Do not inject more than one synthesis challenge per 3-hour active study window to avoid cognitive overload.
+**Caveats / scale trigger:** Cap synthesis-challenge frequency conservatively and tune it from observed overload/engagement signals rather than assuming one universal window such as 3 hours is correct for every learner.
 
 **Sources:** Multi-Armed Bandit Algorithms in Tutoring Systems, Cognitive Psychology of Learning Transfer.
 
@@ -2996,7 +3000,7 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q141. What database schema structure best tracks a student's evolving mental model locally within SQLite for sub-millisecond retrieval?
 
-**Answer:** Optimize local tracking using highly normalized tables, foreign key constraints, and multi-column indexes on conceptual parent-child links.
+**Answer:** Optimize local tracking with normalized tables, foreign keys, and targeted indexes on the relationships you actually query. Local SQLite is appropriate for fast retrieval, but exact latency depends on hardware, cache state, and query shape.
 
 **Implement now:**
 1. Execute the following schema configuration in the local SQLite engine:
@@ -3027,9 +3031,9 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
    CREATE INDEX idx_links_target ON local_concept_links(target_id);
    ```
 
-**Recommended stack:** SQLite WAL mode, SQLCipher, SQLite Indexing.
+**Recommended stack:** SQLite WAL mode, SQLCipher, SQLite indexing.
 
-**Why this over alternatives:** Moving local-first state tracking to complex remote databases introduces high network latency (200-500ms), whereas indexed local SQLite queries execute in $<0.2$ms.
+**Why this over alternatives:** Moving local-first state tracking to remote databases adds network latency and offline fragility. Indexed local SQLite queries are often sub-millisecond on modern hardware, but you should benchmark your target device class before turning that into an SLA.
 
 **Caveats / scale trigger:** If total concept records exceed 50,000, trigger SQLite `ANALYZE` automatically to optimize query planner indexes.
 
@@ -3155,7 +3159,7 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q147. By what logic will the local engine index concepts to allow incredibly fast recursive queries for deep conceptual lineages?
 
-**Answer:** Implement a Transitive Closure Table cache that pre-computes and indexes all hierarchical ancestral paths.
+**Answer:** Use a transitive-closure table when lineage reads are frequent and graph updates are manageable. This trades extra write/storage cost for simpler, faster ancestry queries, but it is not literally constant-time in the formal algorithmic sense.
 
 **Implement now:**
 1. Alongside the standard concept graph table, create a closure table:
@@ -3170,12 +3174,12 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
    );
    CREATE INDEX idx_closure_desc ON concept_closure(descendant_id);
    ```
-2. Write a trigger on `local_concept_links` that automatically inserts records into `concept_closure` when links are added, pre-computing the recursive hierarchy.
-3. Fetch deep lineages in a single query: `SELECT ancestor_id FROM concept_closure WHERE descendant_id = ? ORDER BY depth DESC;`.
+2. Write a trigger or maintenance job on `local_concept_links` that updates `concept_closure` when links are added or removed.
+3. Fetch deep lineages in a single indexed query: `SELECT ancestor_id FROM concept_closure WHERE descendant_id = ? ORDER BY depth DESC;`.
 
-**Recommended stack:** SQLite indexes, Transitive Closure Table pattern.
+**Recommended stack:** SQLite indexes and the transitive-closure-table pattern.
 
-**Why this over alternatives:** Standard recursive CTEs scale exponentially in execution time as graph depths increase, while indexed closure tables fetch conceptual lineages in constant $O(1)$ time complexity.
+**Why this over alternatives:** Recursive CTEs are flexible but can become expensive on repeatedly queried deep hierarchies. Closure tables shift cost to writes and storage so ancestry reads become predictable and index-friendly, with total cost still scaling by result set and stored paths.
 
 **Caveats / scale trigger:** Limit closure table updates to graphs with less than 10 nested levels to prevent write overhead.
 
@@ -3251,28 +3255,18 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q151. How do we modify standard spaced repetition algorithms (like SM-2) to work with conceptual conversational dialogue instead of simple atomic flashcards?
 
-**Answer:** Modify the standard SM-2 algorithm by replacing the binary "recalled/failed" scoring with a multidimensional semantic cosine similarity and conceptual proximity score extracted from conversational context, calculating interval updates on high-level cognitive nodes rather than static card IDs.
+**Answer:** Adapt SM-2 by deriving a review-quality signal from conversational evidence instead of only explicit flashcard grades, but treat any cosine-similarity-to-SM-2 mapping as a tunable heuristic rather than a validated universal scale.
 
 **Implement now:** 
 1. When a user naturally discusses a topic, use an offline semantic parser to extract their assertions and claims.
 2. Map the extracted assertions to active nodes in the user's conceptual graph.
-3. Compute the cosine similarity of the user's explanation against the target node's canonical propositions using `sentence-transformers` (specifically `all-MiniLM-L6-v2` running locally).
-4. Map the cosine similarity score ($S_c$) to an SM-2 quality response ($q \in [0, 5]$):
-   - $S_c \ge 0.85 \implies q = 5$ (perfect)
-   - $0.75 \le S_c < 0.85 \implies q = 4$ (correct after hesitation)
-   - $0.65 \le S_c < 0.75 \implies q = 3$ (correct with significant gaps)
-   - $0.55 \le S_c < 0.65 \implies q = 2$ (incorrect, but easily prompted)
-   - $0.40 \le S_c < 0.55 \implies q = 1$ (incorrect, minor recognition)
-   - $S_c < 0.40 \implies q = 0$ (total failure)
-5. Update the SQLite `learning_intervals` database with the ease factor ($EF$) and interval ($I$) using standard SM-2 logic:
-   - $I(1) = 1$
-   - $I(2) = 6$
-   - For $n > 2$: $I(n) = I(n-1) \cdot EF$
-   - $EF' = EF + (0.1 - (5 - q) \cdot (0.08 + (5 - q) \cdot 0.02))$ (cap $EF$ at a minimum of $1.3$).
+3. Compute semantic similarity between the user's explanation and the target concept's reference propositions using a local embedding model.
+4. Map the similarity score into an SM-2-style quality response with calibrated bands chosen from observed retention outcomes, not assumed as universal constants.
+5. Update the SQLite `learning_intervals` database with the ease factor ($EF$) and interval ($I$) using standard SM-2 logic.
 
-**Recommended stack:** `sentence-transformers` (all-MiniLM-L6-v2) compiled to ONNX, SQLite WAL mode, Yjs with y-websocket, SQLCipher.
+**Recommended stack:** Local embedding model compiled to ONNX, SQLite WAL mode, and encrypted local storage where appropriate.
 
-**Why this over alternatives:** Traditional SM-2 forces the user into tedious card-flipping chores, causing fatigue and drop-off. Spaced conversational dialogue checks retention dynamically through natural interaction, testing operational understanding and context integration rather than mechanical rote memorization.
+**Why this over alternatives:** Standard SM-2 assumes explicit recall prompts. Conversational evidence can make review feel more natural, but the scoring bridge from semantics to SM-2 still needs calibration against actual learning outcomes.
 
 **Caveats / scale trigger:** When the total active tracked concept relationships inside SQLite exceed 50,000, offload cosine similarity scoring to a vectorized background worker using pgvector to prevent main-thread latency spikes during dialogue evaluation.
 
@@ -3303,19 +3297,17 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q153. What metric defines a student's "retention decay curve" for abstract reasoning versus hard factual systems?
 
-**Answer:** Implement a dual-coefficient exponential decay model ($R = e^{-t / S}$) where the strength parameter ($S$) scales dynamically based on the cognitive category: abstract reasoning decays slower but requires high initial reinforcement, whereas hard factual systems (such as specific APIs or syntax) decay rapidly without constant repetition.
+**Answer:** Use different retention policies for factual versus abstract knowledge if that improves outcomes, but treat the decay model and coefficients as tunable product heuristics rather than settled constants from the literature.
 
 **Implement now:**
-1. Categorize all concepts in the Neo4j ontology under a `knowledge_type` property (`FACTUAL` vs `ABSTRACT`).
-2. Calculate the stability ($S$) value for both types following a review:
-   - For `FACTUAL` nodes: $S_{factual} = S_{old} \times (1 + \alpha \cdot q)$ (where $\alpha = 0.1$, prioritizes short-term repetitions).
-   - For `ABSTRACT` nodes: $S_{abstract} = S_{old} \times (1 + \beta \cdot q \cdot \ln(d))$ (where $\beta = 0.35$ and $d$ is the cognitive depth index of the node, rewarding deeper synthesis).
-3. Record each transaction in the SQLite `retention_metrics` table with columns: `concept_id`, `knowledge_type`, `last_tested_at`, `quality_score`, `calculated_stability`.
-4. Run an automatic nightly background task to fit the Ebbinghaus forgetting curve parameters to the user's specific history.
+1. Categorize concepts in the ontology under a `knowledge_type` property such as `FACTUAL` vs `ABSTRACT`.
+2. Start with separate stability-update rules for each class, but treat coefficients and functional form as calibration parameters rather than fixed truths.
+3. Record each transaction in the SQLite `retention_metrics` table with columns such as `concept_id`, `knowledge_type`, `last_tested_at`, `quality_score`, and `calculated_stability`.
+4. Periodically fit or re-tune the model against the user's observed retention history instead of freezing one decay curve forever.
 
-**Recommended stack:** NumPy/SciPy in Python (for central analytics), SQLite, OpenTelemetry.
+**Recommended stack:** NumPy/SciPy or equivalent analytics tooling, SQLite, and observability around retention outcomes.
 
-**Why this over alternatives:** Traditional spaced repetition engines treat all data types identically. Differentiating between abstract reasoning and factual syntax prevents over-testing abstract models (which stay in long-term memory via schema-integration) and under-testing fragile syntax.
+**Why this over alternatives:** Treating all knowledge types identically is often too blunt, but invented coefficients can be just as misleading. A tunable model is more honest and more implementable.
 
 **Caveats / scale trigger:** If the user exhibits high deviation ($\ge 25\%$) from the predicted decay curve across multiple nodes, execute a Levenberg-Marquardt curve-fitting routine in a background process to re-calibrate user-specific $\alpha$ and $\beta$ coefficients.
 
@@ -3400,20 +3392,18 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q157. How do we perfectly balance cognitive friction with psychological safety?
 
-**Answer:** Maintain the user within their dynamic "Zone of Proximal Development" (ZPD) by tracking real-time cognitive load (via telemetry) and scaling the difficulty and tone of the prompt on a sliding scale.
+**Answer:** Approximate cognitive strain with a composite telemetry signal and adapt difficulty/tone cautiously; do not present any single formula as a validated measure of cognitive load or psychological safety.
 
 **Implement now:**
-1. Read real-time telemetry inputs: typing speed hesitation, voice frequency stress, and compilation error rates.
-2. Compute the active Cognitive Load ($CL$):
-   $$CL = w_1 \cdot TH + w_2 \cdot VS + w_3 \cdot ER$$
-   (where $TH$ is typing hesitation deviation, $VS$ is vocal stress, and $ER$ is syntax/compilation error rate).
-3. If $CL \ge 0.75$ (high stress): Automatically step down challenge difficulty, instruct the LLM to use supportive, validating language, and inject structural code hints.
-4. If $CL \le 0.25$ (boredom): Step up complexity, introduce cross-domain analogies, and challenge the user's assumptions.
-5. Keep the $CL$ target within the sweet spot of $[0.35, 0.65]$.
+1. Read telemetry inputs such as typing hesitation, optional voice-derived features where the user has consented, and error rates from the task environment.
+2. Combine them into a composite strain signal using tunable weights or a calibrated model, and treat the result as an experimental proxy rather than ground truth.
+3. If the strain signal is high, step down challenge difficulty, use more supportive language, and add scaffolding.
+4. If the signal is low and engagement remains strong, increase complexity gradually.
+5. Recalibrate thresholds from observed outcomes instead of assuming one universal sweet spot.
 
-**Recommended stack:** LiveKit (for vocal processing), local telemetry monitoring thread, ONNX Runtime.
+**Recommended stack:** Local telemetry monitoring, optional audio processing only with clear consent, and runtime inference where supported.
 
-**Why this over alternatives:** Fixed-difficulty learning engines cause high abandonment. Real-time dynamic ZPD tuning guarantees constant progress without causing emotional shutdown or boredom.
+**Why this over alternatives:** Fixed difficulty causes abandonment, but overly precise formulas create false confidence. A calibrated proxy signal is more realistic than claiming perfect balance.
 
 **Caveats / scale trigger:** Trigger a hard cognitive rest prompt (e.g., "Let's take a quick look at the bigger picture here...") if $CL \ge 0.90$ persists for more than 3 consecutive conversational turns.
 
@@ -3486,18 +3476,18 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q160. How does the system measure long-term cognitive ROI across a 6-month timeline?
 
-**Answer:** Track the acceleration coefficient of new concept acquisition ($A = \frac{\Delta C}{\Delta t}$) adjusted for concept complexity, measuring the decrease in time-to-mastery for successive nested topics in a learning lineage.
+**Answer:** Measure long-term learning ROI with a heuristic acquisition-rate metric adjusted for concept complexity, but present it as an internal product metric rather than as a validated scientific measure of cognition.
 
 **Implement now:**
-1. Assign an objective structural complexity score (1 to 10) to every node in the Neo4j ontology based on prerequisite count and abstract level.
-2. Track the active learning time ($t_m$) spent by the user from initial node encounter to mastery threshold ($\ge 0.85$).
-3. Compute the Weekly Cognitive Acquisition Rate ($CAR$):
+1. Assign a structural complexity score to each node in the ontology using transparent rubric rules.
+2. Track the active learning time spent from initial node encounter to the product's chosen mastery threshold.
+3. Compute a rolling acquisition-rate metric such as:
    $$CAR = \sum_{c \in C} \frac{Complexity(c)}{t_m(c)}$$
-4. Compare $CAR$ across a rolling 6-month timeline. An upward-trending curve indicates that the user's learning speed is accelerating due to established cross-disciplinary scaffolding, fewer conceptual deadlocks, and optimized spaced repetition.
+4. Compare that metric across a 6-month window to see whether the user is mastering comparable concepts more efficiently over time.
 
-**Recommended stack:** ClickHouse Analytical Engine (or local SQLite for single users), Prometheus metrics, OpenTelemetry.
+**Recommended stack:** ClickHouse for larger analytical workloads or local SQLite for single-user analysis, plus standard observability tooling.
 
-**Why this over alternatives:** Traditional trackers count trivial inputs (e.g., hours spent, cards reviewed). SOMA measures actual cognitive velocity and retention efficiency, demonstrating real optimization of human learning capacity.
+**Why this over alternatives:** Simple counts like hours spent or cards reviewed are weak proxies for progress. A complexity-adjusted acquisition metric is more useful operationally, but it should still be framed as a designed heuristic rather than ground truth.
 
 **Caveats / scale trigger:** When historical user session telemetry records exceed 1,000,000 logs, offload analytical trend calculations to a background ClickHouse server.
 
@@ -3553,7 +3543,7 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 **Why this over alternatives:** Traditional systems assume all learners are driven by career utility. Identifying specific motivation profiles allows SOMA to customize the narrative tone, drastically increasing long-term user retention.
 
-**Caveats / scale trigger:** Update motivational profile weights using a moving average decay ($\lambda = 0.90$) to allow the system to adapt as the user's life goals shift over months of platform engagement.
+**Caveats / scale trigger:** Update motivational profile weights with a decaying moving average so the profile can adapt over time; treat the decay factor as a tunable parameter rather than a universal constant.
 
 **Sources:** Self-Determination Theory (Ryan & Deci), SQLite Core Documentation.
 
@@ -3583,21 +3573,17 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q164. How does the cold-start phase identify historical learning trauma (e.g., math anxiety) to avoid triggering mental blocks?
 
-**Answer:** Monitor negative semantic vector drift and physiological biometric signals (such as typing speed volatility or sudden pauses) when the conversation introduces symbols, math terminology, or formal logic notation.
+**Answer:** Watch for repeated stress or avoidance patterns when the conversation introduces domains that commonly trigger anxiety, but treat this as a tentative personalization signal rather than a clinical or diagnostic conclusion.
 
 **Implement now:**
-1. Introduce minor mathematical symbols or quantitative formulas into a casual prompt.
-2. Track the user's `typing_rhythm_entropy` and the sentiment score of their next conversational response.
-3. If typing speed volatility jumps by $\ge 40\%$ or sentiment falls below $-0.5$ (indicating defensiveness or hesitation), log a `high_stress_trigger` in SQLite for the `MATH` domain:
-   ```sql
-   INSERT INTO learning_traumas (domain, stress_index) VALUES ('MATH', 0.85)
-   ON CONFLICT(domain) DO UPDATE SET stress_index = EXCLUDED.stress_index;
-   ```
-4. Rector will thereafter bypass formal mathematical notation, framing quantitative concepts through intuitive visual mechanics or literal analogies.
+1. Introduce light domain-specific probes gradually rather than forcing abrupt exposure.
+2. Track non-invasive signals such as typing pauses, repeated avoidance, abandonment, and optional sentiment-style features in the next response.
+3. If multiple signals indicate stress repeatedly, log a tentative domain-friction flag in SQLite and reduce notation density or switch explanation style.
+4. Reintroduce formal notation gradually only after later interactions suggest the user is coping better.
 
-**Recommended stack:** WebContainers (for sandbox execution), local SQLite, LiveKit (if voice is active).
+**Recommended stack:** Local SQLite plus optional runtime features already in the product; avoid overclaiming on biometric inference.
 
-**Why this over alternatives:** Standard tutors ignore emotional blocks, pushing students into stressful triggers that cause cognitive shutdown. SOMA routes around trauma paths to build intuitive competence first.
+**Why this over alternatives:** Standard tutors often ignore emotional blocks, but overly confident detection logic is risky too. A cautious adaptation signal is more implementable and safer.
 
 **Caveats / scale trigger:** Gradually re-introduce formal notation (by 5% increments in prompt density) only after the user has demonstrated 90% operational mastery of the underlying concepts in visual sandboxes.
 
@@ -3683,7 +3669,7 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 4. Prompt the user: "Deploy the index algorithm using the files on the right."
 5. Track command-line behavior, syntax errors, and compilation rates to perform profiling silently.
 
-**Recommended stack:** WebContainers SDK, Vite, React-monaco-editor, NATS JetStream (to pipe terminal events).
+**Recommended stack:** WebContainers SDK, Vite, React-monaco-editor, and a lightweight local event bus such as BroadcastChannel, MessageChannel, RxJS, or an in-process pub/sub layer for terminal events.
 
 **Why this over alternatives:** Forcing highly motivated, task-oriented developers through slow conversational onboarding causes immediate frustration and abandonment. SOMA accommodates their learning style by testing them through direct implementation.
 
@@ -3695,25 +3681,23 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
 
 ### Q169. What explicit metrics determine that the onboarding phase is complete and the system can transition to full execution?
 
-**Answer:** Complete transition when the confidence intervals ($CI$) of the three core user profile parameters (cognitive capacity, lexical level, and foundational domain knowledge) are all $\ge 85\%$ and stable across 3 successive turns.
+**Answer:** Complete onboarding when the system has enough stable evidence about the user's baseline to stop collecting special cold-start probes. Use standard confidence or variance criteria, but treat the exact thresholds as product heuristics rather than as mathematically canonical constants.
 
 **Implement now:**
-1. Monitor the variance ($\sigma^2$) of the user's trailing 10-turn performance scores.
-2. Calculate confidence ($CI_i$) for each parameter:
-   $$CI_i = 1 - \sqrt{\sigma^2_i}$$
-3. Trigger transition when:
-   $$CI_{\text{cognitive}} \ge 0.85 \quad \text{AND} \quad CI_{\text{lexical}} \ge 0.85 \quad \text{AND} \quad CI_{\text{knowledge}} \ge 0.85$$
+1. Monitor the variance of recent performance observations for the key profile dimensions you actually use.
+2. Estimate confidence with a standard statistical approach appropriate to your signal (for example variance bands, standard confidence intervals, or Bayesian posterior concentration), rather than inventing a pseudo-confidence formula.
+3. Trigger transition when the tracked dimensions remain sufficiently stable across several turns or tasks.
 4. Set local database status:
    ```sql
    UPDATE user_state SET onboarding_phase = 'COMPLETE', execution_mode = 'FULL_NON_LINEAR' WHERE user_id = ?;
    ```
-5. Unlock the full non-linear curriculum routing paths in Neo4j.
+5. Unlock the full non-linear curriculum routing paths only after the profile is stable enough to be useful.
 
 **Recommended stack:** SQLite, SQLCipher, Neo4j.
 
-**Why this over alternatives:** Arbitrary, time-based onboarding limits lead to poor curriculum calibration. Mathematical confidence boundaries guarantee that Rector has mapped the user's mind before allowing unguided path choices.
+**Why this over alternatives:** Arbitrary, purely time-based onboarding limits lead to poor curriculum calibration. Stability-based exit criteria are more defensible, but they still need empirical tuning.
 
-**Caveats / scale trigger:** If confidence fails to reach $85\%$ within 4 hours of active use, flag the profile for human review (if hosted centrally) or fallback to a standard, semi-linear default path.
+**Caveats / scale trigger:** If the profile does not stabilize after extended active use, fall back to a standard, semi-linear default path or request additional calibration rather than pretending confidence has converged.
 
 **Sources:** Neo4j Cypher Manual, SQLite trigger specs.
 
@@ -3738,11 +3722,11 @@ This batch covers RECTOR AI architecture and implementation details (Questions 1
    ```
 5. Rector will actively suggest wrapping up sessions or shifting to light-weight review topics when entering low-energy zones.
 
-**Recommended stack:** SQLite, OpenTelemetry tracing spans.
+**Recommended stack:** SQLite and standard observability traces.
 
-**Why this over alternatives:** Traditional systems ignore fatigue, continuing to push hard concepts when a user is exhausted, which results in cognitive blockages and negative learning associations.
+**Why this over alternatives:** Traditional systems ignore fatigue and time-of-day context, which can lead to poorly timed difficulty spikes.
 
-**Caveats / scale trigger:** Recalibrate the diurnal cycle table weekly to adapt to changes in the user's real-life schedule (e.g., weekend shifts, travel, or timezone changes).
+**Caveats / scale trigger:** Guard any composite "energy score" against divide-by-zero and treat it as a heuristic ranking signal, not a validated physiological measure. Recalibrate the diurnal cycle table regularly to adapt to schedule changes such as travel or shift work.
 
 **Sources:** Diurnal rhythm modeling literature, SQLite Generated Columns.
 
