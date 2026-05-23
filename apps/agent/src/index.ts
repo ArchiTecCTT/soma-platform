@@ -18,6 +18,7 @@ import { PHILOSOPHY_MENTOR_PROMPT } from './rams/philosophyPrompt.js';
 import { requestSandboxState } from './rpc/requestSandboxState.js';
 import { createReadSandboxStateTool } from './tools/readSandboxStateTool.js';
 import { postAgentEvent } from './lib/events.js';
+import { sanitizeLessonContext } from './lib/lessonContext.js';
 
 export default defineAgent({
   entry: async (ctx: JobContext) => {
@@ -49,18 +50,8 @@ export default defineAgent({
 
     const isPhilosophyMode = env.MENTOR_MODE === 'philosophy';
 
-    // Parse participant metadata for lesson context
-    let lessonContext: { topic: string; curriculum: string; socraticQuestion?: string } | undefined = undefined;
-    if (participant.metadata) {
-      try {
-        const parsed = JSON.parse(participant.metadata);
-        if (parsed && typeof parsed === 'object' && parsed.lessonContext) {
-          lessonContext = parsed.lessonContext;
-        }
-      } catch (err) {
-        console.error('Failed to parse participant metadata:', err);
-      }
-    }
+    // Parse and sanitize participant metadata for lesson context
+    const lessonContext = sanitizeLessonContext(participant.metadata);
 
     let instructions = isPhilosophyMode ? PHILOSOPHY_MENTOR_PROMPT : RAMS_SYSTEM_PROMPT;
     let initialGreeting = isPhilosophyMode

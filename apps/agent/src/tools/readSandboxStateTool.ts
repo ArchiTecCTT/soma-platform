@@ -1,9 +1,9 @@
 import { llm } from '@livekit/agents';
 import { z } from 'zod';
-import { createTurnId, SandboxStateSchema } from '@soma/shared';
+import { createTurnId, SandboxStateSchema, type SandboxState } from '@soma/shared';
 
 export const ReadSandboxStateParamsSchema = z.object({
-  maxChars: z.number().min(1).max(8000).optional(),
+  maxChars: z.coerce.number().int().positive().max(8000).optional(),
 });
 
 export type ReadSandboxStateToolParams = z.infer<typeof ReadSandboxStateParamsSchema>;
@@ -14,7 +14,7 @@ export interface ReadSandboxStateParams extends ReadSandboxStateToolParams {
 }
 
 export function createReadSandboxStateTool(
-  requestSandboxState: (args: ReadSandboxStateParams) => Promise<unknown>,
+  requestSandboxState: (args: ReadSandboxStateParams) => Promise<SandboxState>,
   options: { sessionId: string }
 ) {
   return llm.tool({
@@ -26,7 +26,8 @@ export function createReadSandboxStateTool(
         turnId: createTurnId(),
         maxChars: args.maxChars ?? 4000,
       });
-      return JSON.stringify(state);
+      const parsedState = SandboxStateSchema.parse(state);
+      return JSON.stringify(parsedState);
     },
   });
 }

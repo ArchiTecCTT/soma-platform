@@ -28,8 +28,27 @@ export async function requestSandboxState(
     payload: JSON.stringify(payload),
   });
 
-  const snapshotObj = JSON.parse(response);
-  const snapshot = SandboxStateSchema.parse(snapshotObj);
+  let snapshotObj: unknown;
+  try {
+    snapshotObj = JSON.parse(response);
+  } catch (err: any) {
+    const ctxError = new Error(
+      `Failed to parse sandbox state response for participant '${participant.identity}' turn '${payload.turnId}'`
+    );
+    ctxError.cause = err;
+    throw ctxError;
+  }
+
+  let snapshot: SandboxState;
+  try {
+    snapshot = SandboxStateSchema.parse(snapshotObj);
+  } catch (err: any) {
+    const ctxError = new Error(
+      `Sandbox state validation failed for participant '${participant.identity}' turn '${payload.turnId}'`
+    );
+    ctxError.cause = err;
+    throw ctxError;
+  }
 
   if (isStaleSandboxState(payload.turnId, snapshot)) {
     throw new Error(`Stale sandbox state for turn ${payload.turnId}`);

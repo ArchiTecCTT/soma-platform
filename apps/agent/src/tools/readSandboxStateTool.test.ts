@@ -4,7 +4,10 @@ import { createReadSandboxStateTool } from './readSandboxStateTool';
 describe('readSandboxStateTool', () => {
   it('delegates to requestSandboxState and returns bounded snapshot', async () => {
     const mockSnapshot = {
+      sessionId: 'soma-mvp-demo',
       turnId: 't-1',
+      status: 'completed' as const,
+      capturedAt: new Date().toISOString(),
       stdoutTail: '1',
       stderrTail: '',
       files: [],
@@ -26,6 +29,6 @@ describe('readSandboxStateTool', () => {
         maxChars: 4000,
       })
     );
-    expect(result).toBe(JSON.stringify(mockSnapshot));
+    expect(JSON.parse(result)).toEqual(JSON.parse(JSON.stringify(mockSnapshot)));
   });
 });
