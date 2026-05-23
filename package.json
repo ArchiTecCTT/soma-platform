@@ -1,0 +1,21 @@
+{
+  "name": "soma-platform",
+  "private": true,
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "check": "pnpm -r check",
+    "test": "pnpm -r test",
+    "dev": "concurrently -k -n api,web,agent -c blue,green,magenta \"pnpm dev:api\" \"pnpm dev:web\" \"pnpm dev:agent\"",
+    "dev:web": "pnpm --filter @soma/web dev",
+    "dev:api": "pnpm --filter @soma/api dev",
+    "dev:agent": "pnpm --filter @soma/agent dev"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "concurrently": "^9.1.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}

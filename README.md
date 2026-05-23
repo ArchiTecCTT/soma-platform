@@ -9,6 +9,36 @@ The operational centerpiece of this environment is the **Rector Agentic Mentor S
 
 ---
 
+## Local MVP-1 services
+
+- `pnpm dev` — starts API, web shell, and LiveKit worker together
+- `pnpm dev:api` — starts the token API on `http://localhost:8787`
+- `pnpm dev:web` — starts the browser shell
+- `pnpm dev:agent` — starts the LiveKit worker with Azure realtime defaults
+
+### Agent mode / model env knobs
+
+```env
+MENTOR_MODE=technical
+AZURE_OPENAI_REALTIME_DEPLOYMENT=gpt-realtime-mini
+AZURE_OPENAI_TRANSCRIPTION_DEPLOYMENT=gpt-realtime-whisper
+OPENAI_API_VERSION=2025-04-01-preview
+```
+
+- `MENTOR_MODE=technical` → RAMS uses sandbox inspection for code claims
+- `MENTOR_MODE=philosophy` → RAMS becomes a philosophy mentor and does **not** register sandbox tools
+- Default realtime deployment is now `gpt-realtime-mini`
+
+
+---
+
+## MVP-1 verification
+- `pnpm check`
+- `pnpm test`
+- Follow `docs/demo/voice-sandbox-rpc-smoke.md`
+
+---
+
 ## 🏛 Core Philosophical Mandates
 
 ### 1. The 90% Retention Mandate

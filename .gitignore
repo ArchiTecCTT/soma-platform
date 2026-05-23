@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.*
+!.env.example
+dist
+coverage
+.data
+.vite
+.playwright
+data/session-events/*.jsonl
+!data/session-events/.gitkeep
+apps/api/data/session-events/*.jsonl
+!apps/api/data/session-events/.gitkeep

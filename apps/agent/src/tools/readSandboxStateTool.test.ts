@@ -1,0 +1,34 @@
+import { describe, it, expect, vi } from 'vitest';
+import { createReadSandboxStateTool } from './readSandboxStateTool';
+
+describe('readSandboxStateTool', () => {
+  it('delegates to requestSandboxState and returns bounded snapshot', async () => {
+    const mockSnapshot = {
+      sessionId: 'soma-mvp-demo',
+      turnId: 't-1',
+      status: 'completed' as const,
+      capturedAt: new Date().toISOString(),
+      stdoutTail: '1',
+      stderrTail: '',
+      files: [],
+    };
+
+    const requestSandboxState = vi.fn().mockResolvedValue(mockSnapshot);
+
+    const tool = createReadSandboxStateTool(requestSandboxState as never, { sessionId: 'soma-mvp-demo' });
+
+    const result = await tool.execute(
+      { maxChars: 4000 },
+      { toolCallId: 'call-1', ctx: {} as never }
+    );
+
+    expect(requestSandboxState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: 'soma-mvp-demo',
+        turnId: expect.stringMatching(/^turn-[0-9a-f-]+$/),
+        maxChars: 4000,
+      })
+    );
+    expect(JSON.parse(result)).toEqual(JSON.parse(JSON.stringify(mockSnapshot)));
+  });
+});
