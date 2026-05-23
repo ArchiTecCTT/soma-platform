@@ -61,7 +61,7 @@ export function verifyHandoffToken(token: string, secret: string): HandoffPayloa
 
   // 4. Verify expiration
   const nowInSeconds = Math.floor(Date.now() / 1000);
-  if (payload.exp < nowInSeconds) {
+  if (payload.exp <= nowInSeconds) {
     throw new Error('Token has expired');
   }
 

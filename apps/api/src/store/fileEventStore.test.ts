@@ -48,4 +48,22 @@ describe('fileEventStore', () => {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it('rejects sessionId exceeding 128 characters', async () => {
+    const tempDir = await fs.mkdtemp(path.join(process.env.TEMP || '/tmp', 'soma-test-'));
+    try {
+      const longSessionEvent = {
+        sessionId: 'a'.repeat(129),
+        kind: 'user.message' as const,
+        payload: { text: 'too long' },
+        createdAt: '2026-05-21T00:00:00.000Z',
+      };
+
+      await expect(appendSessionEvent(tempDir, longSessionEvent)).rejects.toThrow(
+        'exceeds maximum length of 128 characters'
+      );
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });

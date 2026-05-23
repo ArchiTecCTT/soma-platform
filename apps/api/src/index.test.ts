@@ -1,10 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { clearReplayStore } from './handoff/replayStore';
 import { createApp } from './index';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
 describe('Soma API Endpoints', () => {
+  beforeEach(() => {
+    clearReplayStore();
+  });
   const mockEnv = {
     LIVEKIT_WS_URL: 'wss://example.livekit.cloud',
     LIVEKIT_API_KEY: 'key',
@@ -70,6 +74,36 @@ describe('Soma API Endpoints', () => {
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
+  });
+
+  it('POST /events returns 400 for invalid JSON body', async () => {
+    const app = createApp(mockEnv);
+    const res = await app.request('/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{ invalid-json }',
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('Invalid JSON body');
+  });
+
+  it('POST /events returns 400 for schema validation error', async () => {
+    const app = createApp(mockEnv);
+    const res = await app.request('/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: 'session-api-1',
+        kind: 'user.message',
+        // Missing payload and createdAt
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error: string };
+    expect(body.error).toContain('Validation failed');
   });
 
   describe('POST /handoff/bootstrap', () => {
@@ -149,6 +183,34 @@ describe('Soma API Endpoints', () => {
       expect(body.error).toContain('expired');
     });
 
+    it('returns 401 when exp equals exactly now (exclusive expiration rejection)', async () => {
+      const app = createApp(mockEnv);
+      const nowInSec = Math.floor(Date.now() / 1000);
+      const payload = {
+        iss: 'ornyx-landing-page',
+        aud: 'soma-rams-mentor',
+        iat: nowInSec - 60,
+        exp: nowInSec, // exp === now
+        jti: 'session-expired-exact',
+        topic: 'Expired topic',
+        curriculum: [
+          { step: '01', title: 'Expired', description: 'Expired curriculum' },
+        ],
+      };
+      
+      const token = createToken(payload);
+      
+      const res = await app.request('/handoff/bootstrap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handoff: token }),
+      });
+      
+      expect(res.status).toBe(401);
+      const body = await res.json() as any;
+      expect(body.error).toContain('expired');
+    });
+
     it('returns 401 for an invalid signature', async () => {
       const app = createApp(mockEnv);
       const payload = {
@@ -174,6 +236,63 @@ describe('Soma API Endpoints', () => {
       expect(res.status).toBe(401);
       const body = await res.json() as any;
       expect(body.error).toContain('signature');
+    });
+
+    it('returns 200 for first bootstrap with unique JTI', async () => {
+      // Use unique JTI to avoid cross-test interference
+      const uniqueJti = `session-first-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const app = createApp(mockEnv);
+      const payload = {
+        iss: 'ornyx-landing-page',
+        aud: 'soma-rams-mentor',
+        iat: Math.floor(Date.now() / 1000) - 10,
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        jti: uniqueJti,
+        topic: 'First Bootstrap',
+        curriculum: [{ step: '01', title: 'Step', description: 'Curriculum' }],
+      };
+      const token = createToken(payload);
+      const res = await app.request('/handoff/bootstrap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handoff: token }),
+      });
+      expect(res.status).toBe(200);
+      const body = await res.json() as any;
+      expect(body.roomName).toBe(`room-${uniqueJti}`);
+    });
+
+    it('returns 401 for second bootstrap with same token (replay rejected)', async () => {
+      const uniqueJti = `session-replay-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const app = createApp(mockEnv);
+      const payload = {
+        iss: 'ornyx-landing-page',
+        aud: 'soma-rams-mentor',
+        iat: Math.floor(Date.now() / 1000) - 10,
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        jti: uniqueJti,
+        topic: 'Replay Test',
+        curriculum: [{ step: '01', title: 'Step', description: 'Curriculum' }],
+      };
+      const token = createToken(payload);
+
+      // First bootstrap should succeed
+      const res1 = await app.request('/handoff/bootstrap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handoff: token }),
+      });
+      expect(res1.status).toBe(200);
+
+      // Second bootstrap with same token should be rejected
+      const res2 = await app.request('/handoff/bootstrap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handoff: token }),
+      });
+      expect(res2.status).toBe(401);
+      const body2 = await res2.json() as any;
+      expect(body2.error).toContain('already been used');
     });
   });
 });

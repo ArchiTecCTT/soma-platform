@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { type ApiEnv } from '@soma/shared';
 import { type HandoffPayload, type SessionBootstrapResponse, type HandoffCurriculumStep } from './types';
 import { createLiveKitJoinToken } from '../livekit-token';
