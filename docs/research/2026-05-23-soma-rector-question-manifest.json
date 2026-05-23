@@ -1,0 +1,1601 @@
+[
+  {
+    "globalIndex": 1,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 1,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "How will the Unified SQL Gate parse loose, non-relational intent from the LLM into safe, structured relational database transactions without creating a performance bottleneck?"
+  },
+  {
+    "globalIndex": 2,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 2,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "How do we prevent prompt-injection attacks from executing unauthorized drop or alter commands through the SQL Gate?"
+  },
+  {
+    "globalIndex": 3,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 3,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "What schema standard will cleanly unify structural global facts (textbooks) with transient, personalized user notes inside the same relational layer?"
+  },
+  {
+    "globalIndex": 4,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 4,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "How does the SQL Gate handle transaction rollbacks if a multi-layered learning plan partially writes to the database but crashes halfway through?"
+  },
+  {
+    "globalIndex": 5,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 5,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "What is the database migration protocol when a user adds a completely new custom field or topic directory to their workspace?"
+  },
+  {
+    "globalIndex": 6,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 6,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "How do we prevent deep relational table joins from scaling linearly in latency as a user logs years of daily creation metrics?"
+  },
+  {
+    "globalIndex": 7,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 7,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "How will the gate isolate workspace tool states (e.g., a book draft vs a code script) so they can query each other without bleeding memory?"
+  },
+  {
+    "globalIndex": 8,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 8,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "What metric determines whether data should live inside the local SQLite database or scale up to remote storage tiers?"
+  },
+  {
+    "globalIndex": 9,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 9,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "How do we normalize messy, unstructured external data inputs (like web clips or pasted PDFs) into standard SQL-compatible layouts?"
+  },
+  {
+    "globalIndex": 10,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 10,
+    "section": "1. Unified SQL Gate & Core Data Architecture",
+    "question": "How will connection pooling be managed at the gate when multiple background processes (sandbox execution, note auto-saving, telemetry tracking) hit the database at once?"
+  },
+  {
+    "globalIndex": 11,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 11,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "How do we chunk heterogeneous source materials (e.g., dense mathematical equations vs fluid philosophical prose) without losing structural context?"
+  },
+  {
+    "globalIndex": 12,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 12,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "What specific hybrid retrieval formula balances keyword lexical matching (BM25) and dense vector embeddings (Cosine Similarity) for technical queries?"
+  },
+  {
+    "globalIndex": 13,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 13,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "At what explicit database size scale must the system migrate data from a Postgres/pgvector setup to a high-throughput columnar analytical engine like ClickHouse?"
+  },
+  {
+    "globalIndex": 14,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 14,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "What vector quantization approach (e.g., HNSW vs IVFFlat) preserves semantic recall accuracy while minimizing index memory footprint on the edge?"
+  },
+  {
+    "globalIndex": 15,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 15,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "How do we avoid context-window saturation when Rector runs multi-domain queries across three separate databases at the same time?"
+  },
+  {
+    "globalIndex": 16,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 16,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "What reranker model (e.g., a lightweight Cross-Encoder) will verify RAG results for factual alignment without blowing past your sub-100ms latency budget?"
+  },
+  {
+    "globalIndex": 17,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 17,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "How will the RAG system store and extract inline images, tables, or LaTeX formulas embedded inside textbook reference materials?"
+  },
+  {
+    "globalIndex": 18,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 18,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "By what algorithm do we adjust the relevance weights of a user's personal notes versus authoritative textbook data when answering a query?"
+  },
+  {
+    "globalIndex": 19,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 19,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "How do we cleanly tag chunk metadata to filter information density based on the user's current cognitive tracking status?"
+  },
+  {
+    "globalIndex": 20,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 20,
+    "section": "2. Domain-Isolated Hybrid RAG",
+    "question": "How does the RAG system handle semantic blind spots where two identical terms mean totally different things across domains (e.g., \"String\" in computer science vs physics)?"
+  },
+  {
+    "globalIndex": 21,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 21,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "How do we model evolving time-based dependencies between concepts inside Neo4j without causing a massive explosion of graph edges?"
+  },
+  {
+    "globalIndex": 22,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 22,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "What is the maximum graph traversal hop depth allowed during real-time conversational validation to ensure sub-10ms veto checks?"
+  },
+  {
+    "globalIndex": 23,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 23,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "How does the system translate fluid language output into precise Cypher or GraphQL structural queries for instant graph verification?"
+  },
+  {
+    "globalIndex": 24,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 24,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "When the knowledge graph fires a veto due to a logical out-of-order concept error, how does it pass the exact structural reason back to Rector?"
+  },
+  {
+    "globalIndex": 25,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 25,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "How do we map out the user’s personal concept mastery maps inside the graph without duplicating the global master curriculum layout?"
+  },
+  {
+    "globalIndex": 26,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 26,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "How does the graph engine automatically identify and flag logical contradictions within a student’s custom brain dump?"
+  },
+  {
+    "globalIndex": 27,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 27,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "What is the explicit graph representation for an implicit skill (e.g., \"spatial reasoning\") versus a piece of explicit knowledge (e.g., \"matrix math\")?"
+  },
+  {
+    "globalIndex": 28,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 28,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "How do we calculate edge-weight decay when a user ignores a specific connective bridge between two domains for weeks?"
+  },
+  {
+    "globalIndex": 29,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 29,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "How does the graph resolve conflicts when two authoritative source textbooks present entirely different conceptual structures?"
+  },
+  {
+    "globalIndex": 30,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 30,
+    "section": "3. Knowledge Graph Engine & Relational Anchoring (Neo4j)",
+    "question": "How can we use graph analytics (like PageRank or Centrality) to automatically discover the absolute highest-leverage concept a student should study next?"
+  },
+  {
+    "globalIndex": 31,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 31,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "How do we enforce strict visual design consistency (e.g., responsive layouts, readable contrast) on user dashboards when code is generated entirely on the fly?"
+  },
+  {
+    "globalIndex": 32,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 32,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "How is application state preserved inside a generative sandbox when the user asks Rector to alter a feature mid-execution?"
+  },
+  {
+    "globalIndex": 33,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 33,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "What sandboxing abstraction layer provides the best balance between fast UI rendering speed and deep execution security?"
+  },
+  {
+    "globalIndex": 34,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 34,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "How can a user directly edit code inside their dashboard editor without breaking Rector’s structural tracking of the file system?"
+  },
+  {
+    "globalIndex": 35,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 35,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "How do we cache compiled WebAssembly or JavaScript binaries so dynamic sandboxes open instantly during repeat visits?"
+  },
+  {
+    "globalIndex": 36,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 36,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "What mechanism handles hot-reloading state synchronization between the student's workspace and the background compilation process?"
+  },
+  {
+    "globalIndex": 37,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 37,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "How does the sandbox detect, capture, and translate ugly runtime stack traces into clean, friendly educational feedback?"
+  },
+  {
+    "globalIndex": 38,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 38,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "How do we auto-generate intuitive visual UI controls (like sliders or color pickers) based on variables found in the student's code?"
+  },
+  {
+    "globalIndex": 39,
+    "product": "SOMA",
+    "localQuestionNumber": 39,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "How does the system manage assets (like local image uploads or custom dataset files) within a purely dynamic sandbox?"
+  },
+  {
+    "globalIndex": 40,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 40,
+    "section": "4. Code-as-an-Interface & Generative Visual Sandboxes",
+    "question": "What is the graceful recovery path if the generative interface encounters an unrecoverable infinite loop or out-of-memory crash?"
+  },
+  {
+    "globalIndex": 41,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 41,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "How do we implement strict network air-gapping on server-side E2B Firecracker MicroVMs while still allowing necessary package installations (e.g., npm, pip)?"
+  },
+  {
+    "globalIndex": 42,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 42,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "What optimization techniques can drop server-side MicroVM cold-start times below the critical 200ms human perception limit?"
+  },
+  {
+    "globalIndex": 43,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 43,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "How do we enforce strict resource limits (CPU, RAM, disk I/O) per user sandbox to prevent malicious host machine exhaustion?"
+  },
+  {
+    "globalIndex": 44,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 44,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "What file system persistence model cleanly retains workspace state across ephemeral MicroVM lifecycles without driving up storage costs?"
+  },
+  {
+    "globalIndex": 45,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 45,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "How do we limit browser-side WebContainer or Pyodide resource usage on lower-end mobile devices to avoid UI freezing?"
+  },
+  {
+    "globalIndex": 46,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 46,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "How do we block malicious attempts to escape the sandbox container and access the host server's kernel or environment variables?"
+  },
+  {
+    "globalIndex": 47,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 47,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "What secure communication protocol handles data exchange between the parent application and the client-side sandbox iframe without cross-origin scripting risks?"
+  },
+  {
+    "globalIndex": 48,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 48,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "How do we capture an exact snapshot of a student's broken development workspace so they can share it with a human or another agent for debugging?"
+  },
+  {
+    "globalIndex": 49,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 49,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "When a student writes code that requires an external API key (e.g., building a custom weather app), how are those keys stored securely without exposing them to the LLM?"
+  },
+  {
+    "globalIndex": 50,
+    "batch": 1,
+    "product": "SOMA",
+    "localQuestionNumber": 50,
+    "section": "5. Secure Sandbox Execution (Firecracker MicroVMs)",
+    "question": "How do we continuously monitor and audit sandbox console output to detect subtle signs of systematic abuse?"
+  },
+  {
+    "globalIndex": 51,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 51,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "How do we parse bidirectional `[[links]]` in the note-taking tool to dynamically build a personal knowledge graph without forcing manual configuration?"
+  },
+  {
+    "globalIndex": 52,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 52,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "What heuristic extracts actionable learning items out of a chaotic, text-heavy user \"brain dump\" file?"
+  },
+  {
+    "globalIndex": 53,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 53,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "How do we align a student's highly erratic, self-directed learning plan with the knowledge graph's rigid prerequisite requirements?"
+  },
+  {
+    "globalIndex": 54,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 54,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "How do we keep real-time rich-text editor states synced with vector search indexes without causing editing lag?"
+  },
+  {
+    "globalIndex": 55,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 55,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "What data structure accommodates a note file that mixes standard markdown text, interactive sliders, live code snippets, and sketches?"
+  },
+  {
+    "globalIndex": 56,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 56,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "How does the note tool automatically detect when a paragraph is ready to be converted into an interactive flashcard or quick challenge?"
+  },
+  {
+    "globalIndex": 57,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 57,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "How do we handle acronyms or highly personal shorthand inside user notes when running vector semantic queries?"
+  },
+  {
+    "globalIndex": 58,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 58,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "If a user manually alters a structured learning plan, how does the system adjust the remaining dependency schedule without breaking user choices?"
+  },
+  {
+    "globalIndex": 59,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 59,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "How do we track workspace tool usage times (e.g., hours spent writing vs coding) as an input for cognitive state tracking?"
+  },
+  {
+    "globalIndex": 60,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 60,
+    "section": "6. Polymathic Tool Integration (Notes, Brain Dumps, Plans)",
+    "question": "What unified context bus passes the active state of all workspace tools directly into Rector's conversational loop?"
+  },
+  {
+    "globalIndex": 61,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 61,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "How do we maintain narrative and structural consistency across a 10-chapter book project when context windows limit long-term memory?"
+  },
+  {
+    "globalIndex": 62,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 62,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "What multi-file management strategy allows the coding tool to orchestrate complex application changes across backend and frontend layers at once?"
+  },
+  {
+    "globalIndex": 63,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 63,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "How can generative sandboxes securely expose mock API endpoints to allow user-designed applications to simulate real network requests?"
+  },
+  {
+    "globalIndex": 64,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 64,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "How do we trace and store asset provenance for generated media components (like code snippets, icons, or text structures) inside the workspace?"
+  },
+  {
+    "globalIndex": 65,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 65,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "How do we design an invisible, version-control layer (similar to Git) that lets users revert creative mistakes without cluttering their workspace UI?"
+  },
+  {
+    "globalIndex": 66,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 66,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "How do we prevent creative context fatigue where the model loops on repetitive design choices or writing phrases during a long session?"
+  },
+  {
+    "globalIndex": 67,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 67,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "What real-time linting frameworks verify narrative pacing or stylistic consistency during long writing sessions?"
+  },
+  {
+    "globalIndex": 68,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 68,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "How do we provide highly modular \"starter skeletons\" for complex creative tasks without forcing the user down a rigid, cookie-cutter track?"
+  },
+  {
+    "globalIndex": 69,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 69,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "How do we orchestrate multiple specialized sub-agents (e.g., UI Designer, Database Engineer) inside a single app design workspace?"
+  },
+  {
+    "globalIndex": 70,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 70,
+    "section": "7. Creative Output Engines (App Design, Writing, Complex Creation)",
+    "question": "What clean export standard packages user-created web apps or books into standard production-ready formats (e.g., Vite build packages, clean EPUBs)?"
+  },
+  {
+    "globalIndex": 71,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 71,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "How do we implement conflict-free replicated data types (CRDTs) to handle data sync between local SQLite files and cloud backups seamlessly?"
+  },
+  {
+    "globalIndex": 72,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 72,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "What predictive algorithm pre-fetches RAG vector segments into local cache based on the user's active reading speed and topic choices?"
+  },
+  {
+    "globalIndex": 73,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 73,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "What is the cache eviction policy for knowledge graph components when a local client machine runs extremely low on system memory?"
+  },
+  {
+    "globalIndex": 74,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 74,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "How do heavy background creative saves (e.g., full app project backups) adapt to flaky, high-latency, or dropping internet connections?"
+  },
+  {
+    "globalIndex": 75,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 75,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "How do we encrypt user data during synchronization to ensure absolute privacy while maintaining fast cloud search capabilities?"
+  },
+  {
+    "globalIndex": 76,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 76,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "How do we implement deterministic caching for common AI tool calls to avoid wasting money on identical repetitive requests?"
+  },
+  {
+    "globalIndex": 77,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 77,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "How does the system reconcile manual note edits made offline with automated summaries generated concurrently on the server?"
+  },
+  {
+    "globalIndex": 78,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 78,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "What database migration framework updates thousands of local distributed SQLite files safely without breaking existing user data shapes?"
+  },
+  {
+    "globalIndex": 79,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 79,
+    "section": "8. Sync, Local-First Architecture, and Deterministic Caching",
+    "question": "Should high-dimensional vector arrays live inside the local client SQLite instance or be handled exclusively by a remote server tier?"
+  },
+  {
+    "globalIndex": 80,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 80,
+    "section": "8. Sync, Local-First Architecture, and Determinaching",
+    "question": "How do we optimize local database read/write cycles to prevent storage hardware wear on low-end client tablets or phones?"
+  },
+  {
+    "globalIndex": 81,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 81,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "How does the database engine translate real-time cognitive metrics from Rector into mathematical SQL query constraints on the fly?"
+  },
+  {
+    "globalIndex": 82,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 82,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "What formula calculates an objective \"complexity score\" for a technical document block before it enters the database index?"
+  },
+  {
+    "globalIndex": 83,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 83,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "How do we optimize multi-domain semantic vector searches to complete in under 20ms when filtering across multiple complexity levels?"
+  },
+  {
+    "globalIndex": 84,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 84,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "How does the database system adjust context window sizes when user telemetry flags extreme mental fatigue?"
+  },
+  {
+    "globalIndex": 85,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 85,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "By what logic does the database prioritize historical concepts the user found incredibly easy when building comparative analogies?"
+  },
+  {
+    "globalIndex": 86,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 86,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "How does the data layout dynamically pivot from a dry technical textbook context to an engaging narrative style when cognitive load spikes?"
+  },
+  {
+    "globalIndex": 87,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 87,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "How do we prevent infinite pagination or dead-end query results when filtering narrow technical domains by low complexity levels?"
+  },
+  {
+    "globalIndex": 88,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 88,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "What is the architecture for caching personalized, complexity-filtered context streams across distinct user sessions?"
+  },
+  {
+    "globalIndex": 89,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 89,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "How do we prevent automated text simplification routines from stripping out critical, non-negotiable technical truths?"
+  },
+  {
+    "globalIndex": 90,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 90,
+    "section": "9. Content Complexity Filtering & Load-Aware Query Optimization",
+    "question": "What failsafe trigger rolls back a slow or stalled complexity-filtered database lookup before it can freeze the conversational dashboard interface?"
+  },
+  {
+    "globalIndex": 91,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 91,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "How do we design an open API standard that allows independent developers to securely build new tools (e.g., a mind-mapper) into the Soma layout?"
+  },
+  {
+    "globalIndex": 92,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 92,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "How do we scale the unified SQL gate architecture to handle millions of simultaneous database tenants without running into massive server costs?"
+  },
+  {
+    "globalIndex": 93,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 93,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "What system allows Rector to read schema metadata and automatically understand how to use a newly added third-party tool without code changes?"
+  },
+  {
+    "globalIndex": 94,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 94,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "How do we cleanly isolate third-party tool execution environments to prevent external plugins from stealing highly private user notes?"
+  },
+  {
+    "globalIndex": 95,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 95,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "What long-term database schema versioning strategy protects years of historical student files from breaking during major platform updates?"
+  },
+  {
+    "globalIndex": 96,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 96,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "What centralized logging system tracks performance bottlenecks across the entire database-to-sandbox execution pipeline?"
+  },
+  {
+    "globalIndex": 97,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 97,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "How can we shard the global Neo4j knowledge graph to support deep multi-user collaborative learning pools without hitting performance limits?"
+  },
+  {
+    "globalIndex": 98,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 98,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "How do we manage storage costs for heavy user-created media assets (like design drawings or application binaries) at scale?"
+  },
+  {
+    "globalIndex": 99,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 99,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "What is the structural fallback routing plan if central server scaling infrastructure suffers a massive regional outage?"
+  },
+  {
+    "globalIndex": 100,
+    "batch": 2,
+    "product": "SOMA",
+    "localQuestionNumber": 100,
+    "section": "10. Extensibility, Open Schemas & Long-Term Scaling",
+    "question": "How do we formalize the specification for \"Polymathic Knowledge Packs\" so the community can cleanly build and share custom domain libraries?"
+  },
+  {
+    "globalIndex": 101,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 1,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "How will the Acoustic Node reliably differentiate between a user's natural vocal pitch variance and actual emotional distress across diverse accents?"
+  },
+  {
+    "globalIndex": 102,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 2,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "What graceful degradation path occurs if the user denies microphone or camera permissions at the edge?"
+  },
+  {
+    "globalIndex": 103,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 3,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "How often should the Vision Node sample pixel frames during active work without causing local thermal throttling on mobile/edge devices?"
+  },
+  {
+    "globalIndex": 104,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 4,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "By what metric will the Deterministic Router distinguish between a pause for deep thought and a pause caused by confusion?"
+  },
+  {
+    "globalIndex": 105,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 5,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "How do we normalize keyboard telemetry (e.g., keystroke dynamics) when a user switches from a mechanical keyboard to a mobile touchscreen?"
+  },
+  {
+    "globalIndex": 106,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 6,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "How will the sensory organs isolate user data in noisy environments (e.g., background chatter or poor lighting)?"
+  },
+  {
+    "globalIndex": 107,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 7,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "What data tokenization standard will specialized nodes use to communicate with the Core Brain?"
+  },
+  {
+    "globalIndex": 108,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 8,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "How does the system interpret micro-deletions (backspacing) to distinguish between a simple typo and conceptual uncertainty?"
+  },
+  {
+    "globalIndex": 109,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 9,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "Should sensory data streams be processed concurrently or sequentially within the Go/Rust router?"
+  },
+  {
+    "globalIndex": 110,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 10,
+    "section": "1. Edge Telemetry & Sensory Organs",
+    "question": "How will the Vision Node translate structural layout diagrams into semantic metadata for the Core Brain?"
+  },
+  {
+    "globalIndex": 111,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 11,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "What is the optimal frequency (in milliseconds) for the daemon loop to poll the Redis cache without thrashing the CPU?"
+  },
+  {
+    "globalIndex": 112,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 12,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "How do we prevent semantic vector drift calculations from suffering from short-term context bias?"
+  },
+  {
+    "globalIndex": 113,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 13,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "How are continuous probability scores mathematically mapped to discrete state variables like `IsBurnedOut`?"
+  },
+  {
+    "globalIndex": 114,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 14,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "What mathematical decay function should be applied to telemetry inputs like \"word deletion spikes\" over time?"
+  },
+  {
+    "globalIndex": 115,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 15,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "How will the matrix resolve conflicting telemetry, such as high typing speed paired with extreme vocal jitter?"
+  },
+  {
+    "globalIndex": 116,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 16,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "How do we guarantee that sub-millisecond updates to the state matrix do not cause database write-locks in Redis?"
+  },
+  {
+    "globalIndex": 117,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 17,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "How does the system measure cognitive load mathematically using semantic distance between consecutive prompts?"
+  },
+  {
+    "globalIndex": 118,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 18,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "What happens to the active state matrix if the user suddenly loses internet connectivity mid-session?"
+  },
+  {
+    "globalIndex": 119,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 19,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "How do we calibrate the state matrix baseline for neurodivergent users whose natural telemetry looks anomalous?"
+  },
+  {
+    "globalIndex": 120,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 20,
+    "section": "2. The Continuous Heartbeat Daemon & State Matrix",
+    "question": "How will continuous logic gates account for external variables like late-night fatigue versus midday focus?"
+  },
+  {
+    "globalIndex": 121,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 21,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "How do we bound the search space of first-order logic templates in ∂ILP to avoid a combinatorial explosion during gradient descent?"
+  },
+  {
+    "globalIndex": 122,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 22,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "What evaluation function determines that a newly generated symbolic rule is generalized rather than overfitted to one messy session?"
+  },
+  {
+    "globalIndex": 123,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 23,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "How often should the backend execute the backward pass of gradient descent to compile new symbolic source code rules?"
+  },
+  {
+    "globalIndex": 124,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 24,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "How will the system resolve structural conflicts when ∂ILP compiles a rule that contradicts a core hardcoded pedagogical axiom?"
+  },
+  {
+    "globalIndex": 125,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 25,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "In what format will synthesized rules be stored so they remain fully human-readable and auditable?"
+  },
+  {
+    "globalIndex": 126,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 26,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "How do we translate non-linear, messy user session logs into the clean ground-truth inputs required by ∂ILP?"
+  },
+  {
+    "globalIndex": 127,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 27,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "What loss function best minimizes the delta between predicted student frustration states and actual session termination points?"
+  },
+  {
+    "globalIndex": 128,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 28,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "How will the system handle rule drift as the student evolves from a novice to an advanced polymath?"
+  },
+  {
+    "globalIndex": 129,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 29,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "Can ∂ILP invent new predicates (`Predicate Invention`) to describe completely unexpected user learning archetypes?"
+  },
+  {
+    "globalIndex": 130,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 30,
+    "section": "3. Differentiable Inductive Logic Programming (∂ILP)",
+    "question": "How do we prevent adversarial user behavior from corrupting the synthesized rule base?"
+  },
+  {
+    "globalIndex": 131,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 31,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "How does Rector build a dynamic dependency map that isn't linear but maps common foundational primitives across disparate fields?"
+  },
+  {
+    "globalIndex": 132,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 32,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "By what mechanism does Rector evaluate if a student's desire to jump fields is genuine curiosity or an escape from a hard concept?"
+  },
+  {
+    "globalIndex": 133,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 33,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "How does the system mathematically represent the structural intersection between two vastly different domains?"
+  },
+  {
+    "globalIndex": 134,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 34,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "When a student jumps domains, how does Rector dynamically adjust its conversational persona without losing its core identity?"
+  },
+  {
+    "globalIndex": 135,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 35,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "How does Rector track prerequisites across an open-ended graph without enforcing strict linear gating?"
+  },
+  {
+    "globalIndex": 136,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 36,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "What algorithm determines the exact optimal moment to inject a cross-domain synthesis challenge?"
+  },
+  {
+    "globalIndex": 137,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 37,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "How do we track learning progress in highly abstract fields where traditional binary testing doesn't apply?"
+  },
+  {
+    "globalIndex": 138,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 38,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "How does the curriculum router handle multi-disciplinary inquiries that sit exactly on the border of two fields?"
+  },
+  {
+    "globalIndex": 139,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 39,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "What structural mechanism handles the \"unlearning\" of misconceptions when a student transfers a flawed rule across fields?"
+  },
+  {
+    "globalIndex": 140,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 40,
+    "section": "4. Non-Linear Curricular Routing & Cross-Domain Mapping",
+    "question": "How does the system map implicit skills (e.g., critical thinking) separately from explicit facts?"
+  },
+  {
+    "globalIndex": 141,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 41,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "What database schema structure best tracks a student's evolving mental model locally within SQLite for sub-millisecond retrieval?"
+  },
+  {
+    "globalIndex": 142,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 42,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "How does the local SQLite brain sync delta changes with global databases without creating massive network spikes?"
+  },
+  {
+    "globalIndex": 143,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 43,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "How do we represent changing user belief states or evolving arguments as clean relational data rows?"
+  },
+  {
+    "globalIndex": 144,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 44,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "What database triggers or vacuum strategies will prevent the local SQLite file from bloating after months of daily dense text chat?"
+  },
+  {
+    "globalIndex": 145,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 45,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "How do we cryptographically protect the local SQLite database from local device exploits or unauthorized access?"
+  },
+  {
+    "globalIndex": 146,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 46,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "How does Rector translate raw text chats into structured epistemic milestones inside SQLite?"
+  },
+  {
+    "globalIndex": 147,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 47,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "By what logic will the local engine index concepts to allow incredibly fast recursive queries for deep conceptual lineages?"
+  },
+  {
+    "globalIndex": 148,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 48,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "How do we handle multi-device synchronization if a student switches from an iPad to a laptop mid-session?"
+  },
+  {
+    "globalIndex": 149,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 49,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "What is the explicit architecture for the \"forgetting\" or archiving mechanism for low-priority conversational fluff?"
+  },
+  {
+    "globalIndex": 150,
+    "batch": 3,
+    "product": "RECTOR",
+    "localQuestionNumber": 50,
+    "section": "5. Local Learning Brain (SQLite Epistemic Engine)",
+    "question": "How can the SQLite database act as an active inference engine alongside the symbolic layer?"
+  },
+  {
+    "globalIndex": 151,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 51,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "How do we modify standard spaced repetition algorithms (like SM-2) to work with conceptual conversational dialogue instead of simple atomic flashcards?"
+  },
+  {
+    "globalIndex": 152,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 52,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "How does Rector weave a review of an old concept into a completely unrelated current conversation?"
+  },
+  {
+    "globalIndex": 153,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 53,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "What metric defines a student's \"retention decay curve\" for abstract reasoning versus hard factual systems?"
+  },
+  {
+    "globalIndex": 154,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 54,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "How do we design cognitive challenges that test if a user can apply an old concept to a new domain rather than just reciting it?"
+  },
+  {
+    "globalIndex": 155,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 55,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "What criteria does Rector use to determine that a concept is permanent and no longer needs frequent review?"
+  },
+  {
+    "globalIndex": 156,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 56,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "How does the system mask the micromanagement of these memory techniques so the user never feels like they are doing standard chores?"
+  },
+  {
+    "globalIndex": 157,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 57,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "How do we perfectly balance cognitive friction with psychological safety?"
+  },
+  {
+    "globalIndex": 158,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 58,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "How does Rector track the decay of a student’s historical counter-arguments over time?"
+  },
+  {
+    "globalIndex": 159,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 59,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "What metadata must be attached to a concept to mark it as \"ready for cross-pollination\"?"
+  },
+  {
+    "globalIndex": 160,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 60,
+    "section": "6. Polymathic Retention & Spaced Cognitive Challenge",
+    "question": "How does the system measure long-term cognitive ROI across a 6-month timeline?"
+  },
+  {
+    "globalIndex": 161,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 61,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "What conversational strategies should Rector use in the first 3 hours to map a user's cognitive style without sounding like an interrogation?"
+  },
+  {
+    "globalIndex": 162,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 62,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "How do we determine a user's intrinsic motivation hooks (e.g., status, pure curiosity, practical utility) during the cold start?"
+  },
+  {
+    "globalIndex": 163,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 63,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "What baseline data points are critical to establish before the user is allowed to choose their own custom path?"
+  },
+  {
+    "globalIndex": 164,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 64,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "How does the cold-start phase identify historical learning trauma (e.g., math anxiety) to avoid triggering mental blocks?"
+  },
+  {
+    "globalIndex": 165,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 65,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "How does the system evaluate a user's self-reported expertise versus their actual operational expertise?"
+  },
+  {
+    "globalIndex": 166,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 66,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "What diagnostic tasks can be embedded invisibly within a casual introductory chat?"
+  },
+  {
+    "globalIndex": 167,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 67,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "How do we avoid creating a rigid user profile based solely on flawed or anxious initial interactions?"
+  },
+  {
+    "globalIndex": 168,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 68,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "How do we handle a user who refuses to engage in casual chat and demands immediate technical instruction?"
+  },
+  {
+    "globalIndex": 169,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 69,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "What explicit metrics determine that the onboarding phase is complete and the system can transition to full execution?"
+  },
+  {
+    "globalIndex": 170,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 70,
+    "section": "7. Initial Profiling & Cold-Start Data Gathering",
+    "question": "How does the profiling phase map the student's daily schedule and energy levels to optimize session lengths?"
+  },
+  {
+    "globalIndex": 171,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 71,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "How does the Go/Rust router evaluate inbound multi-modal payloads in sub-5ms without reading full semantic intent?"
+  },
+  {
+    "globalIndex": 172,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 72,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "What threshold criteria determine when a localized small language model (SLM) should be spun down to save system memory?"
+  },
+  {
+    "globalIndex": 173,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 73,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "How do we handle synchronization when an incoming payload requires simultaneous processing by multiple specialized nodes?"
+  },
+  {
+    "globalIndex": 174,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 74,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "What is the fallback architecture if a specialized edge node fails to return a result within its strict latency window?"
+  },
+  {
+    "globalIndex": 175,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 75,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "How do we prevent the hardcoded pipeline from becoming a maintenance bottleneck as new specialized nodes are added?"
+  },
+  {
+    "globalIndex": 176,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 76,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "By what logic does the router determine that an input is purely conversational and can bypass all specialized sensory nodes?"
+  },
+  {
+    "globalIndex": 177,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 77,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "How does the router manage priority queues when a user generates text, audio, and visual inputs concurrently?"
+  },
+  {
+    "globalIndex": 178,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 78,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "What mechanisms are used to securely pass raw telemetry buffers from the edge to the background optimizer loop?"
+  },
+  {
+    "globalIndex": 179,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 79,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "How do we optimize the INT8-quantized edge models to run smoothly across vastly different hardware environments (Intel, ARM, Apple Silicon)?"
+  },
+  {
+    "globalIndex": 180,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 80,
+    "section": "8. Deterministic Router & Compute Gates (Go/Rust Backend)",
+    "question": "How does the router dynamically scale warm instances of models during peak multi-user usage if hosted centrally?"
+  },
+  {
+    "globalIndex": 181,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 81,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "How does the Neo4j knowledge graph structurally intercept token generation to apply a veto before the user sees the output?"
+  },
+  {
+    "globalIndex": 182,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 82,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "What constitutes a pedagogical variance severe enough to trigger a token veto versus letting the LLM express creative prose?"
+  },
+  {
+    "globalIndex": 183,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 83,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "How do we translate complex graph database constraints into low-latency token-filtering rules?"
+  },
+  {
+    "globalIndex": 184,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 84,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "If the graph database flags a factual contradiction, how does Rector seamlessly rewrite its sentence structure on the fly?"
+  },
+  {
+    "globalIndex": 185,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 85,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "How does the system dynamically update the Neo4j knowledge graph when new scientific consensus or updated data emerges?"
+  },
+  {
+    "globalIndex": 186,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 86,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "What mechanism handles situations where the knowledge graph doesn't possess a clear axiom for a niche user question?"
+  },
+  {
+    "globalIndex": 187,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 87,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "How does the graph anchor handle competing interpretations or contested facts within fields like history or philosophy?"
+  },
+  {
+    "globalIndex": 188,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 88,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "How does the veto layer verify that code generated for the Soma Visual Sandbox is syntactically safe and executable?"
+  },
+  {
+    "globalIndex": 189,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 89,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "Can the veto layer force the core model to change its pedagogical stance if it detects the model is coddling the user?"
+  },
+  {
+    "globalIndex": 190,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 90,
+    "section": "9. The Cognitive Veto & Symbolic Integrity Layer",
+    "question": "How do we benchmark the exact latency overhead introduced by passing conversational tokens through a bidirectional graph lookup?"
+  },
+  {
+    "globalIndex": 191,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 91,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "How does Rector avoid developing a sycophantic personality that merely praises the student rather than forcing them to grow?"
+  },
+  {
+    "globalIndex": 192,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 92,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "What boundary protocols prevent the user from forming an unhealthy emotional dependency on the empathetic AI mentor?"
+  },
+  {
+    "globalIndex": 193,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 93,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "How do we ensure Rector doesn't exhibit cultural or regional biases when interpreting vocal telemetry or hesitation?"
+  },
+  {
+    "globalIndex": 194,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 94,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "What is the design protocol for handling highly sensitive or controversial historical content safely without censoring open inquiry?"
+  },
+  {
+    "globalIndex": 195,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 95,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "How does the system handle an existential crisis or deep emotional disclosure from a student during a late-night session?"
+  },
+  {
+    "globalIndex": 196,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 96,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "How do we scale the Postgres/pgvector architecture into ClickHouse without introducing vector retrieval latency spikes?"
+  },
+  {
+    "globalIndex": 197,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 97,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "What metrics define a session's \"Conversational Quality Score\" for developer evaluation?"
+  },
+  {
+    "globalIndex": 198,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 98,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "How do we prevent the Core Brain from experiencing context window fatigue over months of continuous dialogue histories?"
+  },
+  {
+    "globalIndex": 199,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 99,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "How does Rector gracefully decline to answer an ideological prompt while maintaining a neutral, non-judgmental mentoring stance?"
+  },
+  {
+    "globalIndex": 200,
+    "batch": 4,
+    "product": "RECTOR",
+    "localQuestionNumber": 100,
+    "section": "10. Human Alignment, Bias Mitigation & Long-Term Scaling",
+    "question": "How do we build this architecture so it remains fully open and extensible for other developers to plug in new domain libraries?"
+  }
+]
