@@ -26,6 +26,14 @@ export const agentEnvSchema = z.object({
   API_BASE_URL: url.default('http://localhost:8787'),
   VAD_ENDPOINTING_MIN_DELAY_MS: z.coerce.number().int().positive().max(30000).default(1000),
   VAD_ENDPOINTING_MAX_DELAY_MS: z.coerce.number().int().positive().max(30000).default(3000),
+}).superRefine((data, ctx) => {
+  if (data.VAD_ENDPOINTING_MIN_DELAY_MS > data.VAD_ENDPOINTING_MAX_DELAY_MS) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'VAD_ENDPOINTING_MIN_DELAY_MS must be less than or equal to VAD_ENDPOINTING_MAX_DELAY_MS',
+      path: ['VAD_ENDPOINTING_MIN_DELAY_MS'],
+    });
+  }
 });
 
 export const webEnvSchema = z.object({

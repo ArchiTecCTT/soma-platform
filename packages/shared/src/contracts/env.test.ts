@@ -51,6 +51,20 @@ describe('runtime env schemas', () => {
     expect(result.VAD_ENDPOINTING_MAX_DELAY_MS).toBe(4500);
   });
 
+  it('rejects agent env where min delay > max delay', () => {
+    expect(() => {
+      agentEnvSchema.parse({
+        LIVEKIT_WS_URL: 'wss://example.livekit.cloud',
+        LIVEKIT_API_KEY: 'key',
+        LIVEKIT_API_SECRET: 'secret',
+        AZURE_OPENAI_ENDPOINT: 'https://example.openai.azure.com',
+        AZURE_OPENAI_API_KEY: 'azure-key',
+        VAD_ENDPOINTING_MIN_DELAY_MS: '2000',
+        VAD_ENDPOINTING_MAX_DELAY_MS: '1000',
+      });
+    }).toThrow(/VAD_ENDPOINTING_MIN_DELAY_MS must be less than or equal to VAD_ENDPOINTING_MAX_DELAY_MS/);
+  });
+
   it('accepts valid web env with default', () => {
     const result = webEnvSchema.parse({});
 
