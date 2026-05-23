@@ -5,6 +5,34 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
+let mockBootstrapShouldFail = false;
+vi.mock('./handoff/createSessionBootstrap', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./handoff/createSessionBootstrap')>();
+  return {
+    ...actual,
+    createSessionBootstrap: async (env: any, payload: any) => {
+      if (mockBootstrapShouldFail) {
+        throw new Error('Simulated bootstrap failure');
+      }
+      return actual.createSessionBootstrap(env, payload);
+    },
+  };
+});
+
+let mockStoreShouldFail = false;
+vi.mock('./store/fileEventStore', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./store/fileEventStore')>();
+  return {
+    ...actual,
+    appendSessionEvent: async (dir: string, event: any) => {
+      if (mockStoreShouldFail) {
+        throw new Error('Simulated store failure');
+      }
+      return actual.appendSessionEvent(dir, event);
+    },
+  };
+});
+
 describe('Soma API Endpoints', () => {
   beforeEach(() => {
     clearReplayStore();
@@ -106,6 +134,29 @@ describe('Soma API Endpoints', () => {
     expect(body.error).toContain('Validation failed');
   });
 
+  it('POST /events returns 500 for non-validation storage failures from appendSessionEvent', async () => {
+    mockStoreShouldFail = true;
+    try {
+      const app = createApp(mockEnv);
+      const res = await app.request('/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: 'session-api-1',
+          kind: 'user.message',
+          payload: { text: 'hello' },
+          createdAt: new Date().toISOString(),
+        }),
+      });
+
+      expect(res.status).toBe(500);
+      const body = await res.json() as { error: string };
+      expect(body.error).toBe('Internal server error');
+    } finally {
+      mockStoreShouldFail = false;
+    }
+  });
+
   describe('POST /handoff/bootstrap', () => {
     const secret = 'my-super-secret-key-for-testing';
     
@@ -184,8 +235,12 @@ describe('Soma API Endpoints', () => {
     });
 
     it('returns 401 when exp equals exactly now (exclusive expiration rejection)', async () => {
+      vi.useFakeTimers();
+      const fixedTime = new Date('2026-05-23T12:00:00Z');
+      vi.setSystemTime(fixedTime);
+
       const app = createApp(mockEnv);
-      const nowInSec = Math.floor(Date.now() / 1000);
+      const nowInSec = Math.floor(fixedTime.getTime() / 1000);
       const payload = {
         iss: 'ornyx-landing-page',
         aud: 'soma-rams-mentor',
@@ -209,6 +264,8 @@ describe('Soma API Endpoints', () => {
       expect(res.status).toBe(401);
       const body = await res.json() as any;
       expect(body.error).toContain('expired');
+
+      vi.useRealTimers();
     });
 
     it('returns 401 for an invalid signature', async () => {
@@ -285,6 +342,41 @@ describe('Soma API Endpoints', () => {
       expect(res1.status).toBe(200);
 
       // Second bootstrap with same token should be rejected
+      const res2 = await app.request('/handoff/bootstrap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handoff: token }),
+      });
+      expect(res2.status).toBe(401);
+      const body2 = await res2.json() as any;
+      expect(body2.error).toContain('already been used');
+    });
+
+    it('keeps the token consumed to fail closed if bootstrap fails', async () => {
+      mockBootstrapShouldFail = true;
+      const uniqueJti = `session-fail-closed-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const app = createApp(mockEnv);
+      const payload = {
+        iss: 'ornyx-landing-page',
+        aud: 'soma-rams-mentor',
+        iat: Math.floor(Date.now() / 1000) - 10,
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        jti: uniqueJti,
+        topic: 'Fail Closed Test',
+        curriculum: [{ step: '01', title: 'Step', description: 'Curriculum' }],
+      };
+      const token = createToken(payload);
+
+      // First bootstrap should fail with 500
+      const res1 = await app.request('/handoff/bootstrap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handoff: token }),
+      });
+      expect(res1.status).toBe(500);
+
+      // Subsequent bootstraps should still be rejected with 401 replay error (failing closed)
+      mockBootstrapShouldFail = false;
       const res2 = await app.request('/handoff/bootstrap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

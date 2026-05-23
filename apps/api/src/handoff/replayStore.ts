@@ -15,28 +15,27 @@ const CLEANUP_INTERVAL_MS = 60_000;
 let cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Check if a JTI has already been used (replay attack).
- * Returns true if duplicate (reject).
- * Returns false if new (accept).
+ * Attempt to consume a JTI atomically.
+ * Returns true if JTI is new and was successfully consumed (recorded).
+ * Returns false if JTI is a duplicate (already consumed within TTL window) and rejected.
  */
-export function isReplayJti(jti: string, exp: number): boolean {
+export function consumeReplayJti(jti: string, exp: number): boolean {
+  const now = Date.now() / 1000;
   const entry = replayStore.get(jti);
-  if (!entry) {
-    return false; // New JTI, not a replay
-  }
-  // If entry exists but is expired, treat as not a replay (cleanup may be lagging)
-  if (Date.now() / 1000 > entry.exp) {
-    replayStore.delete(jti);
+  
+  if (entry) {
+    if (now > entry.exp) {
+      // If it exists but is expired, we can overwrite/re-consume it
+      replayStore.set(jti, { exp });
+      return true;
+    }
+    // Already consumed and still valid (active TTL)
     return false;
   }
-  return true; // Duplicate within TTL window
-}
-
-/**
- * Record a JTI as used. Call after successful session bootstrap.
- */
-export function recordJti(jti: string, exp: number): void {
+  
+  // New JTI, consume it now
   replayStore.set(jti, { exp });
+  return true;
 }
 
 /**

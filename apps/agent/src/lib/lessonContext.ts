@@ -49,6 +49,11 @@ export function sanitizeLessonContext(
   const curriculum = lc.curriculum.trim();
   const socraticQuestion = lc.socraticQuestion ? lc.socraticQuestion.trim() : undefined;
 
+  // Topic and curriculum must be non-empty trimmed strings
+  if (topic === '' || curriculum === '') {
+    return undefined;
+  }
+
   // Max lengths (topic 256, curriculum 512, socraticQuestion 512)
   if (topic.length > 256 || curriculum.length > 512) {
     return undefined;

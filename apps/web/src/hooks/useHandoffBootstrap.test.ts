@@ -74,14 +74,13 @@ describe('useHandoffBootstrap', () => {
 
     expect(bootstrapSpy).toHaveBeenCalledWith('http://api-base', 'test-token');
     
-    // Wait for async bootstrapSession to complete
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
-    // Check cleanUrl replaced correctly in window.history.replaceState
-    expect((globalThis as any).window.history.replaceState).toHaveBeenCalledWith(
-      {},
-      'Mock Document',
-      '/?otherParam=123#my-hash'
-    );
+    // Assertion-based waiting for the async bootstrapSession/URL cleanup to complete
+    await vi.waitFor(() => {
+      expect((globalThis as any).window.history.replaceState).toHaveBeenCalledWith(
+        {},
+        'Mock Document',
+        '/?otherParam=123#my-hash'
+      );
+    });
   });
 });

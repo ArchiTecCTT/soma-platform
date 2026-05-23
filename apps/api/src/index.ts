@@ -6,7 +6,7 @@ import { SessionEventSchema } from '@soma/shared';
 import { appendSessionEvent } from './store/fileEventStore';
 import { verifyHandoffToken } from './handoff/verifyHandoffToken';
 import { createSessionBootstrap } from './handoff/createSessionBootstrap';
-import { isReplayJti, recordJti } from './handoff/replayStore';
+import { consumeReplayJti } from './handoff/replayStore';
 import { z } from 'zod';
 import * as crypto from 'crypto';
 
@@ -58,15 +58,13 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
         return c.json({ error: tokenErr.message || 'Invalid token' }, 401);
       }
 
-      // Replay protection: reject duplicate JTI until expiration
-      if (isReplayJti(payload.jti, payload.exp)) {
+      // Replay protection: atomically consume JTI before bootstrap to prevent races and fail closed on error
+      if (!consumeReplayJti(payload.jti, payload.exp)) {
         return c.json({ error: 'Token has already been used' }, 401);
       }
 
       try {
         const bootstrapData = await createSessionBootstrap(env, payload);
-        // Record JTI after successful bootstrap to prevent replay
-        recordJti(payload.jti, payload.exp);
         return c.json(bootstrapData);
       } catch (bootstrapErr: any) {
         return c.json({ error: 'Failed to bootstrap session' }, 500);
@@ -93,7 +91,7 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
         const issues = err.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
         return c.json({ error: `Validation failed: ${issues}` }, 400);
       }
-      return c.json({ error: 'Internal server error' }, 400);
+      return c.json({ error: 'Internal server error' }, 500);
     }
   });
 

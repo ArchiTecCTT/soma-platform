@@ -106,4 +106,26 @@ describe('sanitizeLessonContext', () => {
     const result = sanitizeLessonContext(JSON.stringify({ otherKey: 'val' }));
     expect(result).toBeUndefined();
   });
+
+  it('rejects lessonContext if topic is empty or only whitespace', () => {
+    const metadata = JSON.stringify({
+      lessonContext: {
+        topic: '   ',
+        curriculum: 'Valid curriculum',
+      },
+    });
+    const result = sanitizeLessonContext(metadata);
+    expect(result).toBeUndefined();
+  });
+
+  it('rejects lessonContext if curriculum is empty or only whitespace', () => {
+    const metadata = JSON.stringify({
+      lessonContext: {
+        topic: 'Valid topic',
+        curriculum: '\n  \t ',
+      },
+    });
+    const result = sanitizeLessonContext(metadata);
+    expect(result).toBeUndefined();
+  });
 });

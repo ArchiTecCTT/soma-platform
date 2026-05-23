@@ -60,14 +60,17 @@ describe('postAgentEvent', () => {
   it('aborts the fetch if it times out', async () => {
     let aborted = false;
     globalThis.fetch = vi.fn().mockImplementation((_url, options) => {
-      const signal = options.signal;
-      if (signal) {
-        signal.addEventListener('abort', () => {
+      const signal = options?.signal;
+      return new Promise((_resolve, reject) => {
+        if (signal?.aborted) {
           aborted = true;
+          reject(new DOMException('The user aborted a request.', 'AbortError'));
+          return;
+        }
+        signal?.addEventListener('abort', () => {
+          aborted = true;
+          reject(new DOMException('The user aborted a request.', 'AbortError'));
         });
-      }
-      return new Promise((_resolve) => {
-        // never resolves to simulate timeout
       });
     });
 
@@ -83,6 +86,7 @@ describe('postAgentEvent', () => {
     // Fast-forward timers to trigger abort
     vi.advanceTimersByTime(10000);
 
+    await expect(promise).rejects.toThrow(/abort/i);
     expect(aborted).toBe(true);
   });
 });

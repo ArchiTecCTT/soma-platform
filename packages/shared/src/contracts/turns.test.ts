@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createTurnId } from './turns';
 
 describe('createTurnId', () => {
   it('creates turn ID with crypto.randomUUID when available', () => {
     const turnId = createTurnId();
-    expect(turnId).toMatch(/^turn-[0-9a-fA-F]/);
+    // Prefix 'turn-' followed by a valid UUID format
+    expect(turnId).toMatch(/^turn-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/);
   });
 
   it('falls back to Math.random when globalThis.crypto is unavailable', () => {
@@ -18,7 +19,8 @@ describe('createTurnId', () => {
 
     try {
       const turnId = createTurnId();
-      expect(turnId).toMatch(/^turn-[0-9a-fA-F]/);
+      // Prefix 'turn-' followed by exactly 4 hex segments separated by hyphens (fallback implementation)
+      expect(turnId).toMatch(/^turn-[0-9a-fA-F]+-[0-9a-fA-F]+-[0-9a-fA-F]+-[0-9a-fA-F]+$/);
     } finally {
       Object.defineProperty(globalThis, 'crypto', {
         value: originalCrypto,
