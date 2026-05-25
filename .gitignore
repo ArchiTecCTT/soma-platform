@@ -15,3 +15,4 @@ apps/api/data/session-events/*.jsonl
 docs/sovereign-mind/
 docs/wiki/
 artifacts/
+.worktrees/
