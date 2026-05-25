@@ -1,9 +1,95 @@
-* { box-sizing: border-box; }
+@import "tailwindcss";
+
+@theme {
+  /* SOMA Brand Tokens */
+  --color-soma-bg: #020617;
+  --color-soma-fg: #e2e8f0;
+  --color-soma-border: #334155;
+  --color-soma-accent: #38bdf8;
+  --color-soma-muted: #1e293b;
+
+  /* Fonts */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* ============================================
+   SHADCN BASE-NOVA (SLATE) CSS VARIABLES
+   Generated for --style=base-nova --base=base
+   ============================================ */
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.001 286.375);
+  --foreground: oklch(0.141 0.005 285.885);
+  --card: oklch(0.985 0.001 286.375);
+  --card-foreground: oklch(0.141 0.005 285.885);
+  --popover: oklch(0.985 0.001 286.375);
+  --popover-foreground: oklch(0.141 0.005 285.885);
+  --primary: oklch(0.205 0.005 285.885);
+  --primary-foreground: oklch(0.985 0.001 286.375);
+  --secondary: oklch(0.942 0.001 286.375);
+  --secondary-foreground: oklch(0.141 0.005 285.885);
+  --muted: oklch(0.942 0.001 286.375);
+  --muted-foreground: oklch(0.553 0.013 285.885);
+  --accent: oklch(0.942 0.001 286.375);
+  --accent-foreground: oklch(0.141 0.005 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0.001 286.375);
+  --border: oklch(0.922 0.003 286.32);
+  --input: oklch(0.922 0.003 286.32);
+  --ring: oklch(0.708 0.165 288.12);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --chart-1: oklch(0.577 0.245 27.325);
+  --chart-2: oklch(0.708 0.165 288.12);
+  --chart-3: oklch(0.769 0.188 334.153);
+  --chart-4: oklch(0.627 0.257 303.9);
+  --chart-5: oklch(0.645 0.24 282.834);
+}
+
+.dark {
+  --background: oklch(0.141 0.005 285.885);
+  --foreground: oklch(0.985 0.001 286.375);
+  --card: oklch(0.141 0.005 285.885);
+  --card-foreground: oklch(0.985 0.001 286.375);
+  --popover: oklch(0.141 0.005 285.885);
+  --popover-foreground: oklch(0.985 0.001 286.375);
+  --primary: oklch(0.708 0.165 288.12);
+  --primary-foreground: oklch(0.141 0.005 285.885);
+  --secondary: oklch(0.285 0.013 286.32);
+  --secondary-foreground: oklch(0.985 0.001 286.375);
+  --muted: oklch(0.285 0.013 286.32);
+  --muted-foreground: oklch(0.706 0.015 285.885);
+  --accent: oklch(0.285 0.013 286.32);
+  --accent-foreground: oklch(0.985 0.001 286.375);
+  --destructive: oklch(0.639 0.222 27.325);
+  --destructive-foreground: oklch(0.985 0.001 286.375);
+  --border: oklch(0.285 0.013 286.32);
+  --input: oklch(0.285 0.013 286.32);
+  --ring: oklch(0.577 0.245 27.325);
+  --chart-1: oklch(0.577 0.245 27.325);
+  --chart-2: oklch(0.708 0.165 288.12);
+  --chart-3: oklch(0.769 0.188 334.153);
+  --chart-4: oklch(0.627 0.257 303.9);
+  --chart-5: oklch(0.645 0.24 282.834);
+}
+
+/* Base reset */
+*, :before, :after { box-sizing: border-box; }
 html, body, #root { min-height: 100%; margin: 0; }
 body {
-  background: #020617;
-  color: #e2e8f0;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--color-soma-bg);
+  color: var(--color-soma-fg);
+  font-family: var(--font-sans);
 }
-code, pre, textarea, .mono { font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; }
+code, pre, textarea, .mono { font-family: var(--font-mono); }
 button, input, textarea { font: inherit; }
+
+/* Utility classes used by shadcn components */
+@layer base {
+  * { border-color: var(--border); }
+  body { background-color: var(--background); color: var(--foreground); }
+}
