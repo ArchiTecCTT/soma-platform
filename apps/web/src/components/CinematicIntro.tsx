@@ -187,6 +187,7 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
   const showIndictment1  = atOrPast('indictment-1');
   const showIndictment2  = atOrPast('indictment-2');
   const showIndictment3  = atOrPast('indictment-3');
+  const showIndictment4  = atOrPast('indictment-4');
   const showWorldOpen    = atOrPast('world-open');
   const overlayDone      = atOrPast('complete');
 
@@ -236,28 +237,38 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
         className={`ci-indictment ${showIndictment1 ? 'ci-indictment--visible' : ''} ${showWorldOpen ? 'ci-indictment--exit' : ''}`}
       >
         {/* Line 1 */}
-        <p className={`ci-line ci-line--1 ${showIndictment1 ? 'ci-line--in' : ''}`}>
-          We built a system to
+        <p className="ci-line ci-line--1">
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>We</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-1`}>built</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>a</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-3`}>system</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-4`}>to</span></span>
         </p>
 
         {/* Line 2 — standardize colour-bleeds after delay */}
-        <p className={`ci-line ci-line--2 ${showIndictment2 ? 'ci-line--in' : ''}`}>
-          <span
-            className={[
-              'ci-standardize',
-              standardizeOrange ? 'ci-standardize--orange' : '',
-              standardizePulse  ? 'ci-standardize--pulse'  : '',
-            ].join(' ')}
-          >
-            standardize
-          </span>
-          {' '}minds.
+        <p className="ci-line ci-line--2">
+          <span className="inline-block overflow-hidden">
+            <span
+              className={[
+                'ci-indictment-word',
+                showIndictment2 ? 'ci-indictment-word--in' : '',
+                'ci-indictment-word--delay-0',
+                'ci-standardize',
+                standardizeOrange ? 'ci-standardize--orange' : '',
+              ].join(' ')}
+            >
+              standardize
+            </span>
+          </span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment2 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>minds.</span></span>
         </p>
 
         {/* Line 3 */}
-        <p className={`ci-line ci-line--3 ${showIndictment3 ? 'ci-line--in' : ''}`}>
-          It worked.{' '}
-          <span className="ci-bold">Too well.</span>
+        <p className="ci-line ci-line--3">
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>It</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>worked.</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0 ci-bold`}>Too</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2 ci-bold`}>well.</span></span>
         </p>
       </div>
 

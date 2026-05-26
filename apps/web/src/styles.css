@@ -491,16 +491,35 @@ body.ci-active header {
   line-height: 1.15;
   margin: 0;
   text-align: center;
+}
+
+/* ── Indictment Staggered Word Slide-up ────────────────── */
+.ci-indictment-word {
+  display: inline-block;
+  transform: translateY(115%);
   opacity: 0;
-  transform: translateY(22px);
-  transition:
-    opacity   0.65s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  filter: blur(4px); /* subtle entry blur for premium feel */
+  transition: 
+    transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ci-line--in {
-  opacity: 1;
+.ci-indictment-word--in {
   transform: translateY(0);
+  opacity: 1;
+  filter: blur(0);
 }
+
+/* Precise Stagger Delays within a line */
+.ci-indictment-word--delay-0 { transition-delay: 0.00s; }
+.ci-indictment-word--delay-1 { transition-delay: 0.05s; }
+.ci-indictment-word--delay-2 { transition-delay: 0.10s; }
+.ci-indictment-word--delay-3 { transition-delay: 0.15s; }
+.ci-indictment-word--delay-4 { transition-delay: 0.20s; }
 
 /* "It worked. Too well." — heavier weight */
 .ci-line--3 {
