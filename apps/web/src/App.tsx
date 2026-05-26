@@ -17,7 +17,7 @@ function getAiClient() {
 // Gemini prompt, so a malicious user cannot escape the code block or the prompt.
 function sanitizePromptInput(input: string): string {
   return input
-    .replace(/`/g, '\`')
+    .replace(/`/g, '\\`')
     .replace(/\$\{/g, '\${')
     .slice(0, 8000);
 }
