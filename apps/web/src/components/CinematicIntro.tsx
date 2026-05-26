@@ -87,45 +87,39 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     // reveal: ORNYX starts slow majestic fade-in
     pushTimer(() => setIntroState('reveal'), 500);
 
-    // slashes-reveal: // swooshes in (Wait exactly 1.0 second after ORNYX settles at 2500ms -> 3500ms)
-    pushTimer(() => setIntroState('slashes-reveal'), 3500);
+    // slashes-reveal: // swooshes in bottom-to-top simultaneously (Wait exactly 0.5s after ORNYX settles at 2000ms -> 2500ms)
+    pushTimer(() => setIntroState('slashes-reveal'), 2500);
 
-    // soma-reveal: SOMA swooshes in from // 0.5 seconds later (3500ms + 500ms = 4000ms)
-    pushTimer(() => setIntroState('soma-reveal'), 4000);
+    // soma-reveal: Unit 1 shifts left, and SOMA swooshes in from the slashes (Wait 900ms slashes reveal -> 3400ms)
+    pushTimer(() => setIntroState('soma-reveal'), 3400);
 
-    // dock: Fly to nav (Let SOMA settle for 1.2s + 1.2s rest -> 6400ms)
+    // dock: Fly to nav (Let SOMA settle for 1.2s + 1.2s rest -> 5800ms)
     pushTimer(() => {
       measureDockTarget();
       setIntroState('dock');
-    }, 6400);
+    }, 5800);
 
-    const dockEnd = 6400 + 1200; // 7600ms
+    const dockEnd = 5800 + 1100; // 6900ms
 
-    // indictment-1: We built a system to (dockEnd + 600ms rest -> 8200ms)
-    pushTimer(() => setIntroState('indictment-1'), dockEnd + 600);
+    // indictment-1: We built a system to (dockEnd + 500ms rest -> 7400ms)
+    pushTimer(() => setIntroState('indictment-1'), dockEnd + 500);
 
-    // indictment-2: standardize minds (Wait 1600ms -> 9800ms)
-    pushTimer(() => setIntroState('indictment-2'), dockEnd + 2200);
+    // indictment-2: standardize minds (Wait 1400ms -> 8800ms)
+    pushTimer(() => setIntroState('indictment-2'), dockEnd + 1900);
 
-    // color bleed: standardize orange (Wait 800ms after Line 2 -> 10600ms)
-    pushTimer(() => setStandardizeOrange(true), dockEnd + 3000);
+    // indictment-3: It worked. (Wait 1400ms -> 10200ms)
+    pushTimer(() => setIntroState('indictment-3'), dockEnd + 3300);
 
-    // indictment-3: It worked. (Wait 2200ms after Line 2 starts -> 12000ms)
-    pushTimer(() => setIntroState('indictment-3'), dockEnd + 4400);
+    // indictment-4: Too well. (Wait 1400ms -> 11600ms)
+    pushTimer(() => setIntroState('indictment-4'), dockEnd + 4700);
 
-    // indictment-4: Too well. (Wait 1600ms -> 13600ms)
-    pushTimer(() => {
-      setIntroState('indictment-4');
-      setStandardizePulse(true);
-    }, dockEnd + 6000);
+    // color bleed: standardize turns orange (Wait 200ms after Line 4 "Too well." is in -> 11800ms)
+    pushTimer(() => setStandardizeOrange(true), dockEnd + 4900);
 
-    // Turn off pulse glow (Wait 700ms -> 14300ms)
-    pushTimer(() => setStandardizePulse(false), dockEnd + 6700);
+    // world-open: cascade main page, unlock scroll, fade overlay (Wait 2.8s after bleed starts -> 14600ms)
+    pushTimer(() => setIntroState('world-open'), dockEnd + 7700);
 
-    // world-open: cascade main page, unlock scroll, fade overlay (Wait 2400ms after Line 4 starts -> 16000ms)
-    pushTimer(() => setIntroState('world-open'), dockEnd + 8400);
-
-    // complete: unmount overlay (Wait 1800ms after world-open starts -> 17800ms)
+    // complete: unmount overlay (Wait 1600ms after world-open starts -> 16200ms)
     pushTimer(() => {
       if (!isComplete.current) {
         isComplete.current = true;
@@ -134,7 +128,7 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
         setIntroState('complete');
         setTimeout(onComplete, 80);
       }
-    }, dockEnd + 10200);
+    }, dockEnd + 9300);
 
     return clearAllTimers;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -212,15 +206,22 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
         ].join(' ')}
         style={{ '--dock-x': '0px', '--dock-y': '0px' } as React.CSSProperties}
       >
-        <span className="ci-logo__ornyx">ORNYX</span>
         <span
           className={[
-            'ci-logo__slashes',
-            atOrPast('slashes-reveal') ? 'ci-logo__slashes--visible' : '',
+            'ci-logo__unit-1',
+            atOrPast('soma-reveal') ? 'ci-logo__unit-1--shifted' : '',
           ].join(' ')}
-          aria-hidden="true"
         >
-          //
+          <span className="ci-logo__ornyx">ORNYX</span>
+          <span
+            className={[
+              'ci-logo__slashes',
+              atOrPast('slashes-reveal') ? 'ci-logo__slashes--visible' : '',
+            ].join(' ')}
+            aria-hidden="true"
+          >
+            //
+          </span>
         </span>
         <span
           className={[
