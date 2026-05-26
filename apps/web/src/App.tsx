@@ -4,6 +4,7 @@ import { ChatMessage, EventLog } from './types';
 import { analyzeSandbox } from './lib/rams';
 import AmbientBackground from './components/AmbientBackground';
 import CinematicIntro from './components/CinematicIntro';
+import CustomCursor from './components/CustomCursor';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
 
@@ -245,6 +246,9 @@ export default function App() {
 
       {/* Ambient Background Motion */}
       <AmbientBackground />
+
+      {/* Custom Dynamic Cursor */}
+      <CustomCursor />
 
       {/* Header / Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-brand-black/80 backdrop-blur-md border-b border-brand-gray px-6 py-4 flex justify-between items-center">
