@@ -11,6 +11,7 @@ export const apiEnvSchema = z.object({
   EVENTS_DIR: z.string().default('data/session-events'),
   RAMS_SHARED_SECRET: required,
   GEMINI_API_KEY: z.string().min(1).optional(),
+  ALLOWED_WEB_ORIGINS: z.string().default('http://localhost:5173,http://localhost:4173,http://127.0.0.1:5173,http://127.0.0.1:4173'),
 });
 
 export const agentEnvSchema = z.object({

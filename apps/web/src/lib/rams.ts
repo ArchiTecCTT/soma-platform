@@ -1,3 +1,5 @@
+import { csrfHeader } from './csrf';
+
 export interface AnalyzeSandboxInput {
   code: string;
   explanation: string;
@@ -12,10 +14,14 @@ export async function analyzeSandbox(
   input: AnalyzeSandboxInput
 ): Promise<AnalyzeSandboxResponse> {
   const normalizedBase = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
-  const response = await fetch(`${normalizedBase}/rams/analyze`, {
+  const url = `${normalizedBase}/rams/analyze`;
+
+  const response = await fetch(url, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      ...csrfHeader(),
     },
     body: JSON.stringify(input),
   });

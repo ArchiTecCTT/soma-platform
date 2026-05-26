@@ -21,6 +21,7 @@ describe('postSessionEvent', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('http://localhost:8787/events', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },

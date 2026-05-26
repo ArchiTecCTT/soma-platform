@@ -7,6 +7,15 @@ import { appendSessionEvent } from './store/fileEventStore';
 import { verifyHandoffToken } from './handoff/verifyHandoffToken';
 import { createSessionBootstrap } from './handoff/createSessionBootstrap';
 import { consumeReplayJti } from './handoff/replayStore';
+import {
+  createSession,
+  generateCsrfToken,
+  getSessionTtlSeconds,
+  buildSessionCookies,
+  sessionMiddleware,
+  csrfMiddleware,
+  startSessionCleanup,
+} from './session';
 import { z } from 'zod';
 import * as crypto from 'crypto';
 
@@ -41,15 +50,9 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// ---------------------------------------------------------------------------//
-// Allowed CORS origins — tighten from wildcard to explicit list                  //
-// ---------------------------------------------------------------------------//
-const ALLOWED_ORIGINS = new Set([
-  'http://localhost:5173', // Vite dev server
-  'http://localhost:4173', // Vite preview
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:4173',
-]);
+function parseAllowedOrigins(value: string) {
+  return new Set(value.split(',').map(origin => origin.trim()).filter(Boolean));
+}
 
 const ramsAnalyzeSchema = z.object({
   code: z.string().trim().min(1).max(12000),
@@ -87,6 +90,8 @@ function extractGeminiText(payload: any) {
 export function createApp(rawEnv: Record<string, string | undefined>) {
   const env = parseApiEnv(rawEnv);
   const app = new Hono();
+  startSessionCleanup();
+  const allowedOrigins = parseAllowedOrigins(env.ALLOWED_WEB_ORIGINS);
 
   // NOTE: allowedOrigins is passed as a Set; cors with function origin receives
   // (origin) => boolean, which Hono/cors accepts via the `origin` option as a
@@ -95,14 +100,15 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
     '*',
     cors({
       origin: (origin: string) => {
-        if (ALLOWED_ORIGINS.has(origin)) return origin;
+        if (allowedOrigins.has(origin)) return origin;
         // Allow requests with no Origin header (e.g., same-origin curl/test)
         if (!origin) return '*';
         // Reject unknown origins
         return '';
       },
       allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type', 'Authorization'],
+      allowHeaders: ['Content-Type', 'Authorization', 'X-Session-Token'],
+      credentials: true,
     })
   );
 
@@ -110,9 +116,12 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
     return c.json({ ok: true });
   });
 
-  // NOTE: /livekit/token is intentionally unauthenticated for local preview.
-  // The web app uses this endpoint without auth headers.
-  // Auth will be added via env-gated restriction in future when env schema supports it.
+  // Session + CSRF middleware: /health and /handoff/bootstrap skip session validation.
+  // /livekit/token is protected — requires a valid session cookie.
+  const publicPaths = ['/health', '/handoff/bootstrap'];
+  app.use('*', sessionMiddleware(publicPaths));
+  app.use('*', csrfMiddleware(publicPaths, allowedOrigins));
+
   app.get('/livekit/token', async (c) => {
     const room = c.req.query('room') || 'soma-mvp';
     const identity = c.req.query('identity') || `user-${crypto.randomUUID()}`;
@@ -148,6 +157,26 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
 
       try {
         const bootstrapData = await createSessionBootstrap(env, payload);
+
+        // Create a server-side session tied to this handoff
+        const sessionId = createSession({
+          handoffJti: payload.jti,
+          participantName: bootstrapData.participantName,
+          roomName: bootstrapData.roomName,
+          createdAt: new Date().toISOString(),
+          expiresAt: Math.floor(Date.now() / 1000) + getSessionTtlSeconds(),
+        });
+
+        // Generate CSRF token for this session
+        const csrfToken = generateCsrfToken();
+        const ttl = getSessionTtlSeconds();
+        const secure = c.req.header('x-forwarded-proto') === 'https'
+          || c.req.header('origin')?.startsWith('https://') === true
+          || c.req.url.startsWith('https://');
+        for (const ch of buildSessionCookies(sessionId, csrfToken, ttl, secure)) {
+          c.header('Set-Cookie', ch, { append: true });
+        }
+
         return c.json(bootstrapData);
       } catch (bootstrapErr: any) {
         return c.json({ error: 'Failed to bootstrap session' }, 500);

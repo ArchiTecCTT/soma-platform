@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { clearReplayStore } from './handoff/replayStore';
 import { createApp, resetRateLimitMap } from './index';
+import { clearSessions, createSession, generateCsrfToken, getSessionTtlSeconds } from './session';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -36,6 +37,7 @@ vi.mock('./store/fileEventStore', async (importOriginal) => {
 describe('Soma API Endpoints', () => {
   beforeEach(() => {
     clearReplayStore();
+    clearSessions();
     resetRateLimitMap();
   });
   const mockEnv = {
@@ -48,6 +50,29 @@ describe('Soma API Endpoints', () => {
     GEMINI_API_KEY: 'gemini-test-key',
   };
 
+  function createAuthHeaders() {
+    const sessionId = createSession({
+      handoffJti: `test-${crypto.randomUUID()}`,
+      participantName: 'student-test',
+      roomName: 'room-test',
+      createdAt: new Date().toISOString(),
+      expiresAt: Math.floor(Date.now() / 1000) + getSessionTtlSeconds(),
+    });
+    const csrfToken = generateCsrfToken();
+    return {
+      cookie: `soma-session=${sessionId}; soma-csrf=${csrfToken}`,
+      csrfToken,
+      postHeaders: {
+        'Content-Type': 'application/json',
+        'Cookie': `soma-session=${sessionId}; soma-csrf=${csrfToken}`,
+        'X-Session-Token': csrfToken,
+      },
+      getHeaders: {
+        'Cookie': `soma-session=${sessionId}; soma-csrf=${csrfToken}`,
+      },
+    };
+  }
+
   it('GET /health returns 200 and {ok:true}', async () => {
     const app = createApp(mockEnv);
     const res = await app.request('/health');
@@ -58,7 +83,8 @@ describe('Soma API Endpoints', () => {
 
   it('GET /livekit/token returns token with defaults', async () => {
     const app = createApp(mockEnv);
-    const res = await app.request('/livekit/token');
+    const { getHeaders } = createAuthHeaders();
+    const res = await app.request('/livekit/token', { headers: getHeaders });
     expect(res.status).toBe(200);
     const body = await res.json() as { wsUrl: string; token: string };
     expect(body.wsUrl).toBe('wss://example.livekit.cloud');
@@ -68,12 +94,21 @@ describe('Soma API Endpoints', () => {
 
   it('GET /livekit/token?room=soma-mv&identity=user-1 returns token with query params', async () => {
     const app = createApp(mockEnv);
-    const res = await app.request('/livekit/token?room=soma-mvp&identity=user-1');
+    const { getHeaders } = createAuthHeaders();
+    const res = await app.request('/livekit/token?room=soma-mvp&identity=user-1', { headers: getHeaders });
     expect(res.status).toBe(200);
     const body = await res.json() as { wsUrl: string; token: string };
     expect(body.wsUrl).toBe('wss://example.livekit.cloud');
     expect(typeof body.token).toBe('string');
     expect(body.token.length).toBeGreaterThan(20);
+  });
+
+  it('GET /livekit/token returns 401 without a session cookie', async () => {
+    const app = createApp(mockEnv);
+    const res = await app.request('/livekit/token');
+    expect(res.status).toBe(401);
+    const body = await res.json() as { error: string };
+    expect(body.error).toContain('Session required');
   });
 
   it('POST /events appends event and returns 200 with ok and filePath', async () => {
@@ -89,7 +124,7 @@ describe('Soma API Endpoints', () => {
       
       const res = await app.request('/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: createAuthHeaders().postHeaders,
         body: JSON.stringify(event),
       });
 
@@ -110,7 +145,7 @@ describe('Soma API Endpoints', () => {
     const app = createApp(mockEnv);
     const res = await app.request('/events', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createAuthHeaders().postHeaders,
       body: '{ invalid-json }',
     });
 
@@ -123,7 +158,7 @@ describe('Soma API Endpoints', () => {
     const app = createApp(mockEnv);
     const res = await app.request('/events', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createAuthHeaders().postHeaders,
       body: JSON.stringify({
         sessionId: 'session-api-1',
         kind: 'user.message',
@@ -142,7 +177,7 @@ describe('Soma API Endpoints', () => {
       const app = createApp(mockEnv);
       const res = await app.request('/events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: createAuthHeaders().postHeaders,
         body: JSON.stringify({
           sessionId: 'session-api-1',
           kind: 'user.message',
@@ -159,11 +194,24 @@ describe('Soma API Endpoints', () => {
     }
   });
 
+  it('POST /rams/analyze returns 401 without a session cookie', async () => {
+    const app = createApp(mockEnv);
+    const res = await app.request('/rams/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'const x = 1;', explanation: '' }),
+    });
+
+    expect(res.status).toBe(401);
+    const body = await res.json() as { error: string };
+    expect(body.error).toContain('Session required');
+  });
+
   it('POST /rams/analyze returns 503 when GEMINI_API_KEY is missing', async () => {
     const app = createApp({ ...mockEnv, GEMINI_API_KEY: undefined });
     const res = await app.request('/rams/analyze', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createAuthHeaders().postHeaders,
       body: JSON.stringify({
         code: 'const x = 1;',
         explanation: 'I would guard shared state with a mutex.',
@@ -179,7 +227,7 @@ describe('Soma API Endpoints', () => {
     const app = createApp(mockEnv);
     const res = await app.request('/rams/analyze', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createAuthHeaders().postHeaders,
       body: JSON.stringify({ code: '' }),
     });
 
@@ -208,7 +256,7 @@ describe('Soma API Endpoints', () => {
     const app = createApp(mockEnv);
     const res = await app.request('/rams/analyze', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createAuthHeaders().postHeaders,
       body: JSON.stringify({
         code: 'const x = 1;',
         explanation: 'I would use compare-and-swap.',
@@ -245,7 +293,7 @@ describe('Soma API Endpoints', () => {
     for (let i = 0; i < 10; i++) {
       const res = await app.request('/rams/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: createAuthHeaders().postHeaders,
         body,
       });
       expect(res.status).toBe(200);
@@ -254,7 +302,7 @@ describe('Soma API Endpoints', () => {
     // The 11th request should be rate-limited
     const res = await app.request('/rams/analyze', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createAuthHeaders().postHeaders,
       body,
     });
     expect(res.status).toBe(429);
@@ -270,7 +318,7 @@ describe('Soma API Endpoints', () => {
     const app = createApp(mockEnv);
     const res = await app.request('/rams/analyze', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: createAuthHeaders().postHeaders,
       body: JSON.stringify({ code: 'const x = 1;', explanation: 'Reasoning.' }),
     });
 

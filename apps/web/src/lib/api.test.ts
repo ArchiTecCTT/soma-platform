@@ -21,7 +21,8 @@ describe('fetchLiveKitToken', () => {
     const result = await fetchLiveKitToken('http://localhost:8787', 'soma-mvp', 'user-1');
 
     expect(globalFetch).toHaveBeenCalledWith(
-      'http://localhost:8787/livekit/token?room=soma-mvp&identity=user-1'
+      'http://localhost:8787/livekit/token?room=soma-mvp&identity=user-1',
+      { credentials: 'include' }
     );
     expect(result).toEqual(mockResponse);
   });
