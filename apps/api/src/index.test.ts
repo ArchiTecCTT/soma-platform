@@ -44,6 +44,7 @@ describe('Soma API Endpoints', () => {
     API_PORT: '8787',
     EVENTS_DIR: 'data/session-events',
     RAMS_SHARED_SECRET: 'my-super-secret-key-for-testing',
+    GEMINI_API_KEY: 'gemini-test-key',
   };
 
   it('GET /health returns 200 and {ok:true}', async () => {
@@ -155,6 +156,76 @@ describe('Soma API Endpoints', () => {
     } finally {
       mockStoreShouldFail = false;
     }
+  });
+
+  it('POST /rams/analyze returns 503 when GEMINI_API_KEY is missing', async () => {
+    const app = createApp({ ...mockEnv, GEMINI_API_KEY: undefined });
+    const res = await app.request('/rams/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: 'const x = 1;',
+        explanation: 'I would guard shared state with a mutex.',
+      }),
+    });
+
+    expect(res.status).toBe(503);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('RAMS reasoning engine is not configured');
+  });
+
+  it('POST /rams/analyze returns 400 for invalid request payload', async () => {
+    const app = createApp(mockEnv);
+    const res = await app.request('/rams/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: '' }),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await res.json() as { error: string };
+    expect(body.error).toContain('Validation failed');
+  });
+
+  it('POST /rams/analyze proxies critique generation through the server', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [
+                { text: 'Your fix still races on shared token state; make refill and consume atomic.' },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const app = createApp(mockEnv);
+    const res = await app.request('/rams/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: 'const x = 1;',
+        explanation: 'I would use compare-and-swap.',
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json() as { critique: string };
+    expect(body.critique).toContain('shared token state');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent');
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      method: 'POST',
+      headers: expect.objectContaining({
+        'Content-Type': 'application/json',
+        'x-goog-api-key': 'gemini-test-key',
+      }),
+    });
   });
 
   describe('POST /handoff/bootstrap', () => {

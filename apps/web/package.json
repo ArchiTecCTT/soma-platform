@@ -10,13 +10,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@base-ui-components/react": "1.0.0-rc.0",
-    "@chakra-ui/react": "^3.35.0",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@google/genai": "^2.6.0",
-    "@mui/icons-material": "^9.0.1",
-    "@mui/material": "^9.0.1",
     "@radix-ui/react-slot": "^1.2.4",
     "@soma/shared": "workspace:*",
     "@tailwindcss/vite": "^4.3.0",

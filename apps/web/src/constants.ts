@@ -1,4 +1,4 @@
-import { HistoricalBeat, RhetoricalChoice, RoadmapItem } from './types';
+import { ComparisonRow, HistoricalBeat, RhetoricalChoice, RoadmapItem } from './types';
 
 export const HISTORICAL_BEATS: HistoricalBeat[] = [
   {
@@ -52,7 +52,7 @@ export const RHETORICAL_CHOICE: RhetoricalChoice = {
   ]
 };
 
-export const COMPARISON_DATA = [
+export const COMPARISON_DATA: ComparisonRow[] = [
   {
     feature: 'Primary Objective',
     soma: 'Rigorous understanding & mental model validation',

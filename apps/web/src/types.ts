@@ -36,3 +36,10 @@ export interface RoadmapItem {
   items: string[];
   status: 'current' | 'next' | 'later';
 }
+
+export interface ComparisonRow {
+  feature: string;
+  soma: string;
+  chatbots: string;
+  copilots: string;
+}

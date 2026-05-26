@@ -1,26 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { HISTORICAL_BEATS, RHETORICAL_CHOICE, COMPARISON_DATA, ROADMAP, DEFAULT_FLAWED_CODE } from './constants';
 import { ChatMessage, EventLog } from './types';
+import { analyzeSandbox } from './lib/rams';
 
-const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-function getAiClient() {
-  if (!geminiApiKey) {
-    return null;
-  }
-
-  return new GoogleGenAI({ apiKey: geminiApiKey });
-}
-
-// Strip template-literal and backtick chars from user input before it enters the
-// Gemini prompt, so a malicious user cannot escape the code block or the prompt.
-function sanitizePromptInput(input: string): string {
-  return input
-    .replace(/`/g, '\\`')
-    .replace(/\$\{/g, '\${')
-    .slice(0, 8000);
-}
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
 
 export default function App() {
   // Loading Screen State
@@ -173,39 +156,12 @@ export default function App() {
     addLog('RAMS_INSPECT', 'Analyzing AST and user reasoning...');
 
     try {
-      const prompt = `
-        You are RAMS, an adversarial voice-first AI mentor for elite technical builders.
-        Your job is to challenge weak reasoning, point out hidden assumptions, and push the user to think from first principles.
-        Do not passively agree. Be sharp, intellectually rigorous, and direct.
-
-        Here is the user's current code in the sandbox:
-        \`\`\`javascript
-        ${sanitizePromptInput(code)}
-        \`\`\`
-
-        Here is the user's explanation of their reasoning:
-        "${sanitizePromptInput(explanation)}"
-
-        Analyze their code and explanation. Identify if they successfully resolved the race condition (e.g., using atomic operations, locks, or proper timestamp synchronization) and the precision loss.
-        If they did not, challenge them directly on why their solution fails. If they did, challenge them on edge cases (e.g., clock drift, memory overhead, or starvation).
-
-        Keep your response concise (under 4 sentences), highly technical, and adversarial. Do not say "Great job!" or "Excellent!". Start directly with the critique.
-      `;
-
-      const ai = getAiClient();
-      if (!ai) {
-        throw new Error('Missing VITE_GEMINI_API_KEY');
-      }
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          thinkingConfig: { thinkingBudget: 0 }
-        }
+      const response = await analyzeSandbox(apiBaseUrl, {
+        code,
+        explanation,
       });
 
-      const ramsResponse = response.text || "I detect no rigorous reasoning here. Try again.";
+      const ramsResponse = response.critique || 'I detect no rigorous reasoning here. Try again.';
 
       setChatHistory(prev => [
         ...prev,
@@ -989,9 +945,9 @@ export default function App() {
             <div className="flex justify-center space-x-6 text-xs font-mono text-brand-textMuted pt-4">
               <a href="#sandbox" className="hover:text-white transition-colors">View Demo</a>
               <span>/</span>
-              <a href="#" className="hover:text-white transition-colors">Read Quickstart</a>
+              <a href="#sandbox" className="hover:text-white transition-colors">Read Quickstart</a>
               <span>/</span>
-              <a href="#" className="hover:text-white transition-colors">System Architecture</a>
+              <a href="#roadmap" className="hover:text-white transition-colors">System Architecture</a>
             </div>
           </div>
         </section>
@@ -1007,12 +963,12 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-8">
-            <a href="#" className="hover:text-white transition-colors">Docs</a>
-            <a href="#" className="hover:text-white transition-colors">Demo</a>
-            <a href="#" className="hover:text-white transition-colors">About</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">GitHub</a>
+            <a href="#sandbox" className="hover:text-white transition-colors">Docs</a>
+            <a href="#comparison" className="hover:text-white transition-colors">Demo</a>
+            <a href="#narrative" className="hover:text-white transition-colors">About</a>
+            <a href="mailto:founders@soma.intelligence" className="hover:text-white transition-colors">Contact</a>
+            <a href="#hero" className="hover:text-white transition-colors">Privacy</a>
+            <a href="https://github.com/ArchiTecCTT/soma-platform" className="hover:text-white transition-colors">GitHub</a>
           </div>
 
           <div className="text-right">

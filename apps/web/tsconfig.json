@@ -12,5 +12,5 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
-  "exclude": ["src/livekit", "src/sandbox", "src/styles.css"]
+  "exclude": ["src/livekit", "src/sandbox"]
 }
