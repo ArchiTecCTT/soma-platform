@@ -1,9 +1,286 @@
-* { box-sizing: border-box; }
+@import "tailwindcss";
+
+@theme {
+  /* SOMA Brand Tokens */
+  --color-soma-bg: #020617;
+  --color-soma-fg: #e2e8f0;
+  --color-soma-border: #334155;
+  --color-soma-accent: #38bdf8;
+  --color-soma-muted: #1e293b;
+
+  /* Tailwind v4 custom theme — matches template brand config */
+  --color-brand-black: #030303;
+  --color-brand-dark: #080808;
+  --color-brand-gray: #121212;
+  --color-brand-lightGray: #1E1E1E;
+  --color-brand-accent: #FF5733;
+  --color-brand-cyan: #00F0FF;
+  --color-brand-textMuted: #7E7E7E;
+
+  /* Fonts */
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ============================================
+   SHADCN BASE-NOVA (SLATE) CSS VARIABLES
+   Generated for --style=base-nova --base=base
+   ============================================ */
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.001 286.375);
+  --foreground: oklch(0.141 0.005 285.885);
+  --card: oklch(0.985 0.001 286.375);
+  --card-foreground: oklch(0.141 0.005 285.885);
+  --popover: oklch(0.985 0.001 286.375);
+  --popover-foreground: oklch(0.141 0.005 285.885);
+  --primary: oklch(0.205 0.005 285.885);
+  --primary-foreground: oklch(0.985 0.001 286.375);
+  --secondary: oklch(0.942 0.001 286.375);
+  --secondary-foreground: oklch(0.141 0.005 285.885);
+  --muted: oklch(0.942 0.001 286.375);
+  --muted-foreground: oklch(0.553 0.013 285.885);
+  --accent: oklch(0.942 0.001 286.375);
+  --accent-foreground: oklch(0.141 0.005 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0.001 286.375);
+  --border: oklch(0.922 0.003 286.32);
+  --input: oklch(0.922 0.003 286.32);
+  --ring: oklch(0.708 0.165 288.12);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --chart-1: oklch(0.577 0.245 27.325);
+  --chart-2: oklch(0.708 0.165 288.12);
+  --chart-3: oklch(0.769 0.188 334.153);
+  --chart-4: oklch(0.627 0.257 303.9);
+  --chart-5: oklch(0.645 0.24 282.834);
+}
+
+.dark {
+  --background: oklch(0.141 0.005 285.885);
+  --foreground: oklch(0.985 0.001 286.375);
+  --card: oklch(0.141 0.005 285.885);
+  --card-foreground: oklch(0.985 0.001 286.375);
+  --popover: oklch(0.141 0.005 285.885);
+  --popover-foreground: oklch(0.985 0.001 286.375);
+  --primary: oklch(0.708 0.165 288.12);
+  --primary-foreground: oklch(0.141 0.005 285.885);
+  --secondary: oklch(0.285 0.013 286.32);
+  --secondary-foreground: oklch(0.985 0.001 286.375);
+  --muted: oklch(0.285 0.013 286.32);
+  --muted-foreground: oklch(0.706 0.015 285.885);
+  --accent: oklch(0.285 0.013 286.32);
+  --accent-foreground: oklch(0.985 0.001 286.375);
+  --destructive: oklch(0.639 0.222 27.325);
+  --destructive-foreground: oklch(0.985 0.001 286.375);
+  --border: oklch(0.285 0.013 286.32);
+  --input: oklch(0.285 0.013 286.32);
+  --ring: oklch(0.577 0.245 27.325);
+  --chart-1: oklch(0.577 0.245 27.325);
+  --chart-2: oklch(0.708 0.165 288.12);
+  --chart-3: oklch(0.769 0.188 334.153);
+  --chart-4: oklch(0.627 0.257 303.9);
+  --chart-5: oklch(0.645 0.24 282.834);
+}
+
+/* Base reset */
+*, :before, :after { box-sizing: border-box; }
 html, body, #root { min-height: 100%; margin: 0; }
 body {
-  background: #020617;
-  color: #e2e8f0;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
 }
-code, pre, textarea, .mono { font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; }
+code, pre, textarea, .mono { font-family: var(--font-mono); }
 button, input, textarea { font: inherit; }
+
+/* Utility classes used by shadcn components */
+@layer base {
+  * { border-color: var(--border); }
+  body { background-color: var(--background); color: var(--foreground); }
+}
+
+/* ============================================
+   ANIMATION & VISUAL EFFECTS
+   Moved from index.html inline <style> block
+   ============================================ */
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #030303; }
+::-webkit-scrollbar-thumb { background: #1E1E1E; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #FF5733; }
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(13, 13, 13, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.glass-panel-accent {
+  background: rgba(255, 87, 51, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 87, 51, 0.15);
+}
+
+/* Ambient Background Glows */
+.glow-blob {
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+/* Self-Drawing SVG Path — scroll-driven via inline strokeDashoffset */
+.draw-path {
+  stroke-dasharray: 1000;
+}
+
+/* Kinetic Typography & Glitch Effects */
+.glitch-text {
+  position: relative;
+}
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #030303;
+}
+.glitch-text::before {
+  left: 2px;
+  text-shadow: -1px 0 #00F0FF;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+.glitch-text::after {
+  left: -2px;
+  text-shadow: -1px 0 #FF5733;
+  clip: rect(85px, 450px, 140px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% { clip: rect(31px, 9999px, 94px, 0); }
+  10% { clip: rect(112px, 9999px, 76px, 0); }
+  20% { clip: rect(85px, 9999px, 5px, 0); }
+  30% { clip: rect(27px, 9999px, 115px, 0); }
+  40% { clip: rect(73px, 9999px, 29px, 0); }
+  50% { clip: rect(118px, 9999px, 142px, 0); }
+  60% { clip: rect(9px, 9999px, 53px, 0); }
+  70% { clip: rect(131px, 9999px, 88px, 0); }
+  80% { clip: rect(45px, 9999px, 122px, 0); }
+  90% { clip: rect(14px, 9999px, 92px, 0); }
+  100% { clip: rect(67px, 9999px, 105px, 0); }
+}
+
+@keyframes glitch-anim2 {
+  0% { clip: rect(76px, 9999px, 116px, 0); }
+  11% { clip: rect(43px, 9999px, 98px, 0); }
+  22% { clip: rect(122px, 9999px, 14px, 0); }
+  33% { clip: rect(5px, 9999px, 85px, 0); }
+  44% { clip: rect(94px, 9999px, 53px, 0); }
+  55% { clip: rect(11px, 9999px, 128px, 0); }
+  66% { clip: rect(139px, 9999px, 74px, 0); }
+  77% { clip: rect(52px, 9999px, 111px, 0); }
+  88% { clip: rect(103px, 9999px, 22px, 0); }
+  99% { clip: rect(18px, 9999px, 145px, 0); }
+  100% { clip: rect(89px, 9999px, 63px, 0); }
+}
+
+/* Slow premium entry animations */
+@keyframes slowFadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slowFadeInRight {
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slowFadeInLeft {
+  from { opacity: 0; transform: translateX(-50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slowFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scrollFlow {
+  0% { top: -100%; }
+  100% { top: 100%; }
+}
+
+.animate-hero-title {
+  opacity: 0;
+  animation: slowFadeInUp 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-hero-sub {
+  opacity: 0;
+  animation: slowFadeInRight 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 400ms;
+}
+.animate-hero-btn-left {
+  opacity: 0;
+  animation: slowFadeInLeft 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 800ms;
+}
+.animate-hero-btn-fade {
+  opacity: 0;
+  animation: slowFadeIn 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 1200ms;
+}
+.animate-hero-scroll {
+  opacity: 0;
+  animation: slowFadeIn 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 1600ms;
+}
+.animate-scroll-flow {
+  animation: scrollFlow 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+/* ============================================
+   PREFERS-REDUCED-MOTION FALLBACK
+   Disable all continuous / decorative animations
+   for users who have requested reduced motion.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  /* Tailwind continuous animation utilities */
+  .animate-pulse,
+  .animate-ping,
+  .animate-spin {
+    animation: none !important;
+  }
+
+  /* Hero entry animations — instant reveal instead */
+  .animate-hero-title,
+  .animate-hero-sub,
+  .animate-hero-btn-left,
+  .animate-hero-btn-fade,
+  .animate-hero-scroll {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Scroll indicator flowing light — static instead */
+  .animate-scroll-flow {
+    animation: none !important;
+  }
+
+  /* Glitch text — purely decorative; disable entirely */
+  .glitch-text::before,
+  .glitch-text::after {
+    animation: none !important;
+  }
+
+  /* Ambient glow blobs — disable parallax scroll transform */
+  .glow-blob {
+    transition: none !important;
+  }
+}
