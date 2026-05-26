@@ -90,33 +90,33 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     // slashes-reveal: // swooshes in bottom-to-top simultaneously (Wait exactly 0.5s after ORNYX settles at 2000ms -> 2500ms)
     pushTimer(() => setIntroState('slashes-reveal'), 2500);
 
-    // soma-reveal: Unit 1 shifts left, and SOMA swooshes in from the slashes (Wait 900ms slashes reveal -> 3400ms)
-    pushTimer(() => setIntroState('soma-reveal'), 3400);
+    // soma-reveal: Unit 1 shifts left, and SOMA swooshes in from the slashes (Wait 500ms slashes reveal -> 3000ms)
+    pushTimer(() => setIntroState('soma-reveal'), 3000);
 
-    // dock: Fly to nav (Let SOMA settle for 1.2s + 1.2s rest -> 5800ms)
+    // dock: Fly to nav (Let SOMA settle for 1.2s + 1.2s rest -> 5400ms)
     pushTimer(() => {
       measureDockTarget();
       setIntroState('dock');
-    }, 5800);
+    }, 5400);
 
-    const dockEnd = 5800 + 1100; // 6900ms
+    const dockEnd = 5400 + 1100; // 6500ms
 
-    // indictment-1: We built a system to (dockEnd + 500ms rest -> 7400ms)
+    // indictment-1: We built a system to (dockEnd + 500ms rest -> 7000ms)
     pushTimer(() => setIntroState('indictment-1'), dockEnd + 500);
 
-    // indictment-2: standardize minds (Wait 1400ms -> 8800ms)
+    // indictment-2: standardize minds (Wait 1400ms -> 8400ms)
     pushTimer(() => setIntroState('indictment-2'), dockEnd + 1900);
 
-    // indictment-3: It worked. (Wait 1400ms -> 10200ms)
+    // indictment-3: It worked. (Wait 1400ms -> 9800ms)
     pushTimer(() => setIntroState('indictment-3'), dockEnd + 3300);
 
-    // indictment-4: Too well. (Wait 1400ms -> 11600ms)
+    // indictment-4: Too well. (Wait 1400ms -> 11200ms)
     pushTimer(() => setIntroState('indictment-4'), dockEnd + 4700);
 
-    // color bleed: standardize turns orange (Wait 200ms after Line 4 "Too well." is in -> 11800ms)
+    // color bleed: standardize turns orange (Wait 200ms after Line 4 "Too well." is in -> 11400ms)
     pushTimer(() => setStandardizeOrange(true), dockEnd + 4900);
 
-    // world-open: cascade main page, unlock scroll, fade overlay (Wait 2.8s after bleed starts -> 14600ms)
+    // world-open: cascade main page, unlock scroll, fade overlay (Wait 2.8s after bleed starts -> 14200ms)
     // Toggles body classes here so hero section cascades and scroll unlocks during overlay 0.7s fade-out (fixes Coderabbit/Copilot)
     pushTimer(() => {
       setIntroState('world-open');
@@ -124,7 +124,7 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
       document.body.classList.add('ci-done');
     }, dockEnd + 7700);
 
-    // complete: unmount overlay (Wait 1600ms after world-open starts -> 16200ms)
+    // complete: unmount overlay (Wait 1600ms after world-open starts -> 15800ms)
     // Deferred until overlay has fully faded out to prevent visual cuts (fixes Sentry)
     pushTimer(() => {
       if (!isComplete.current) {
@@ -214,32 +214,21 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
         ].join(' ')}
         style={{ '--dock-x': '0px', '--dock-y': '0px' } as React.CSSProperties}
       >
-        <span
-          className={[
-            'ci-logo__unit-1',
-            atOrPast('soma-reveal') ? 'ci-logo__unit-1--shifted' : '',
-          ].join(' ')}
-        >
-          <span className="ci-logo__ornyx">ORNYX</span>
-          <span
+        <span className="ci-logo__unit-1">
+          <span className="ci-logo__ornyx">ORNYX</span><span
             className={[
               'ci-logo__slashes',
               atOrPast('slashes-reveal') ? 'ci-logo__slashes--visible' : '',
             ].join(' ')}
             aria-hidden="true"
-          >
-            //
-          </span>
-        </span>
-        <span
+          >//</span>
+        </span><span
           className={[
             'ci-logo__soma',
             atOrPast('soma-reveal') ? 'ci-logo__soma--visible' : '',
           ].join(' ')}
           aria-hidden="true"
-        >
-          SOMA
-        </span>
+        >SOMA</span>
       </span>
 
       {/* ── Indictment text (Act 3) — lives inside overlay, centered ──── */}

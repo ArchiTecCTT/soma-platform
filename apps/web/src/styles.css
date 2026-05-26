@@ -399,20 +399,10 @@ body.ci-active header {
   color: #ffffff;
 }
 
-/* Sliding unit containing ORNYX and slashes. Shifts left when SOMA appears. */
+/* Unit wrapper containing ORNYX and slashes for styling co-alignment */
 .ci-logo__unit-1 {
   display: inline-flex;
   align-items: baseline;
-  transform: translateX(0);
-  will-change: transform;
-  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.ci-logo__unit-1--shifted {
-  transform: translateX(-2.5ch); /* exact monospace shift to keep entire mark perfectly centered */
-}
-/* Ensure the translate resets to 0 when logo is docked in nav bar */
-.ci-logo--docked .ci-logo__unit-1 {
-  transform: translateX(0) !important;
 }
 
 /* Slashes (//) part — orange, bottom-to-top clip-path reveal. Collapses layout when hidden. */
@@ -436,7 +426,7 @@ body.ci-active header {
 .ci-logo__slashes--visible {
   opacity: 1;
   margin-left: 0.08em; /* tighter inline spacing for professional typography */
-  max-width: 3ch;
+  max-width: 2ch;
   clip-path: inset(0 0 0 0);
   transform: translateY(0);
   overflow: visible;
@@ -463,7 +453,7 @@ body.ci-active header {
 .ci-logo__soma--visible {
   opacity: 1;
   margin-left: 0.08em; /* tighter inline spacing for professional typography */
-  max-width: 6ch;
+  max-width: 4ch;
   transform: translateX(0) scale(1);
   filter: blur(0);
   overflow: visible;
@@ -608,30 +598,39 @@ body.ci-done .ci-hero-content > *:nth-child(4) { transition-delay: 0.48s; }
   body.ci-active header > div:last-child { opacity: 1 !important; pointer-events: auto !important; }
 }
 
-/* ── Main Hero Animated Typography (Slide-up Mask) ─────────── */
-.ci-hero-line-1,
-.ci-hero-line-2 {
+/* ── Main Hero Animated Typography (Staggered Word Slide-up) ─────────── */
+.ci-hero-word {
   display: block;
-  width: 100%;
-  overflow: hidden;
-  vertical-align: bottom;
-}
-.ci-hero-word-slide {
   transform: translateY(115%);
   opacity: 0;
   will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  filter: blur(0px); /* forces sub-pixel anti-aliasing rendering in Chrome/Firefox */
   transition: none;
 }
-body.ci-done .ci-hero-word-slide {
+body.ci-done .ci-hero-word {
   transform: translateY(0);
   opacity: 1;
+  filter: blur(0px);
   transition: 
-    transform 1.5s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-body.ci-done .ci-hero-word-slide--delay {
-  transition-delay: 0.35s; /* exact staggered delay for Line 2 */
-}
+
+/* Precise Stagger Delays for each word */
+body.ci-done .ci-hero-word--delay-0  { transition-delay: 0.00s; }
+body.ci-done .ci-hero-word--delay-1  { transition-delay: 0.04s; }
+body.ci-done .ci-hero-word--delay-2  { transition-delay: 0.08s; }
+body.ci-done .ci-hero-word--delay-3  { transition-delay: 0.12s; }
+body.ci-done .ci-hero-word--delay-4  { transition-delay: 0.16s; }
+body.ci-done .ci-hero-word--delay-5  { transition-delay: 0.20s; }
+body.ci-done .ci-hero-word--delay-6  { transition-delay: 0.24s; }
+body.ci-done .ci-hero-word--delay-7  { transition-delay: 0.40s; }
+body.ci-done .ci-hero-word--delay-8  { transition-delay: 0.44s; }
+body.ci-done .ci-hero-word--delay-9  { transition-delay: 0.50s; }
+body.ci-done .ci-hero-word--delay-10 { transition-delay: 0.56s; }
 
 /* "standardize" color bleed inside hero text */
 .ci-hero-standardize {
