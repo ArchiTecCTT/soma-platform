@@ -14,7 +14,7 @@ export async function fetchLiveKitToken(
   const normalizedBase = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
   const url = `${normalizedBase}/livekit/token?room=${encodeURIComponent(room)}&identity=${encodeURIComponent(identity)}`;
 
-  const response = await fetch(url);
+  const response = await fetch(url, { credentials: 'include' });
   if (!response.ok) {
     throw new Error(`Token fetch failed: ${response.status}`);
   }
