@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { HISTORICAL_BEATS, RHETORICAL_CHOICE, COMPARISON_DATA, ROADMAP, DEFAULT_FLAWED_CODE } from './constants';
 import { ChatMessage, EventLog } from './types';
 import { analyzeSandbox } from './lib/rams';
+import AmbientBackground from './components/AmbientBackground';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
 
@@ -229,15 +230,8 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-brand-black text-gray-100 selection:bg-brand-accent selection:text-black">
 
-      {/* Ambient Background Glows driven by scroll position */}
-      <div
-        style={{ transform: `translate(${scrollY * 0.1}px, ${scrollY * 0.05}px)` }}
-        className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-accent/10 rounded-full glow-blob transition-transform duration-300"
-      ></div>
-      <div
-        style={{ transform: `translate(-${scrollY * 0.08}px, -${scrollY * 0.04}px)` }}
-        className="absolute top-2/3 right-1/4 w-[500px] h-[500px] bg-brand-cyan/5 rounded-full glow-blob transition-transform duration-300"
-      ></div>
+      {/* Ambient Background Motion */}
+      <AmbientBackground />
 
       {/* Header / Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-brand-black/80 backdrop-blur-md border-b border-brand-gray px-6 py-4 flex justify-between items-center">
@@ -322,7 +316,7 @@ export default function App() {
 
 
         {/* SECTION 2: Why the old system existed */}
-        <section id="historical-context" className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative overflow-hidden">
+        <section id="historical-context" className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative overflow-hidden">
           {/* Self-drawing SVG line connecting the beats driven by scroll progress */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
             <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -446,7 +440,7 @@ export default function App() {
 
 
         {/* SECTION 4: Why this becomes harmful now */}
-        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative">
+        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative">
           <div className="max-w-3xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">03 / THE COGNITIVE TRAP</span>
@@ -551,7 +545,7 @@ export default function App() {
 
 
         {/* SECTION 6: Soma Reveal */}
-        <section className="py-32 px-6 border-b border-brand-gray bg-brand-black relative text-center">
+        <section className="py-32 px-6 border-b border-brand-gray bg-brand-black/50 backdrop-blur-md relative text-center">
           <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/0 via-brand-accent/5 to-brand-dark/0 pointer-events-none"></div>
           <div className="max-w-3xl mx-auto space-y-8 relative z-10">
             <span className="text-xs font-mono text-brand-cyan tracking-widest uppercase">Introducing Ornyx // Soma</span>
@@ -577,7 +571,7 @@ export default function App() {
 
 
         {/* SECTION 7: How Soma works & Live Sandbox Simulator */}
-        <section id="sandbox" className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative">
+        <section id="sandbox" className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative">
           <div className="max-w-7xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">05 / LIVE PROTOTYPE</span>
@@ -736,7 +730,7 @@ export default function App() {
 
 
         {/* SECTION 8: Why Soma is different */}
-        <section id="comparison" className="py-24 px-6 border-b border-brand-gray bg-brand-black relative">
+        <section id="comparison" className="py-24 px-6 border-b border-brand-gray bg-brand-black/50 backdrop-blur-md relative">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">06 / ARCHITECTURAL CONTRAST</span>
@@ -773,7 +767,7 @@ export default function App() {
 
 
         {/* SECTION 9: What exists now */}
-        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative">
+        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">07 / HONEST PROOF</span>
@@ -818,7 +812,7 @@ export default function App() {
 
 
         {/* SECTION 10: Roadmap snapshot */}
-        <section id="roadmap" className="py-24 px-6 border-b border-brand-gray bg-brand-black relative">
+        <section id="roadmap" className="py-24 px-6 border-b border-brand-gray bg-brand-black/50 backdrop-blur-md relative">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">08 / DEVELOPMENT PATH</span>
@@ -864,7 +858,7 @@ export default function App() {
 
 
         {/* SECTION 11: Who it is for / not for */}
-        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative">
+        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative">
           <div className="max-w-4xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">09 / ALIGNMENT</span>
@@ -908,7 +902,7 @@ export default function App() {
 
 
         {/* SECTION 12: Early access CTA */}
-        <section id="cta" className="py-32 px-6 bg-brand-black relative text-center">
+        <section id="cta" className="py-32 px-6 bg-brand-black/50 backdrop-blur-md relative text-center">
           <div className="max-w-2xl mx-auto space-y-8 relative z-10">
             <span className="text-xs font-mono text-brand-accent tracking-widest uppercase">Inquiry Complete</span>
             <h2 className="text-4xl md:text-5xl font-light text-white leading-tight font-display">
