@@ -113,8 +113,8 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     // indictment-4: Too well. (Wait 1400ms -> 11200ms)
     pushTimer(() => setIntroState('indictment-4'), dockEnd + 4700);
 
-    // color bleed: standardize turns orange (Wait 200ms after Line 4 "Too well." is in -> 11400ms)
-    pushTimer(() => setStandardizeOrange(true), dockEnd + 4900);
+    // color bleed: standardize turns orange (Wait 500ms after Line 4 "Too well." is in -> 11700ms)
+    pushTimer(() => setStandardizeOrange(true), dockEnd + 5200);
 
     // world-open: cascade main page, unlock scroll, fade overlay (Wait 2.8s after bleed starts -> 14200ms)
     // Toggles body classes here so hero section cascades and scroll unlocks during overlay 0.7s fade-out (fixes Coderabbit/Copilot)
@@ -196,8 +196,6 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
   return (
     <div
       id="ci-overlay"
-      role="dialog"
-      aria-label="Cinematic Intro Sequence"
       className={`ci-overlay ${showWorldOpen ? 'ci-overlay--done' : ''}`}
     >
       {/* ── Scanline flicker — single decorative layer ──────────────────── */}
