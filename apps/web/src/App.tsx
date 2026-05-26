@@ -3,6 +3,7 @@ import { HISTORICAL_BEATS, RHETORICAL_CHOICE, COMPARISON_DATA, ROADMAP, DEFAULT_
 import { ChatMessage, EventLog } from './types';
 import { analyzeSandbox } from './lib/rams';
 import AmbientBackground from './components/AmbientBackground';
+import CinematicIntro from './components/CinematicIntro';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
 
@@ -11,6 +12,10 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [loadingStatus, setLoadingProgressStatus] = useState<string>('INITIALIZING COGNITIVE CORE...');
+
+  // Cinematic Intro State
+  const [introVisible, setIntroVisible] = useState<boolean>(true);
+  const navWordmarkRef = useRef<HTMLElement | null>(null);
 
   // Narrative Navigation State
   const [activeSection, setActiveSection] = useState<string>('hero');
@@ -230,6 +235,14 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-brand-black text-gray-100 selection:bg-brand-accent selection:text-black">
 
+      {/* Cinematic Intro Overlay */}
+      {introVisible && (
+        <CinematicIntro
+          onComplete={() => setIntroVisible(false)}
+          navWordmarkRef={navWordmarkRef}
+        />
+      )}
+
       {/* Ambient Background Motion */}
       <AmbientBackground />
 
@@ -237,7 +250,7 @@ export default function App() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-brand-black/80 backdrop-blur-md border-b border-brand-gray px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-3">
           <div className="w-3 h-3 bg-brand-accent animate-pulse rounded-full"></div>
-          <span className="font-mono tracking-widest text-sm font-bold text-white">ORNYX // SOMA</span>
+          <span ref={navWordmarkRef as React.RefObject<HTMLSpanElement>} className="ci-nav-wordmark font-mono tracking-widest text-sm font-bold text-white">ORNYX // SOMA</span>
         </div>
         <nav className="hidden md:flex space-x-8 text-xs font-mono tracking-wider text-brand-textMuted">
           <a href="#narrative" className={`transition-colors ${activeSection === 'narrative' ? 'text-brand-accent' : 'hover:text-white'}`}>01 / THE PROBLEM</a>
@@ -266,16 +279,16 @@ export default function App() {
             className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 pointer-events-none"
           ></div>
 
-          <div className="max-w-4xl mx-auto z-10 space-y-10">
-            {/* Hero Title: Slower, premium entry animation */}
-            <h1 className="animate-hero-title text-5xl md:text-7xl font-light tracking-tight text-white leading-tight font-display">
+          <div className="ci-hero-content max-w-4xl mx-auto z-10 space-y-10">
+            {/* Hero Title */}
+            <h1 className="text-5xl md:text-7xl font-light tracking-tight text-white leading-tight font-display">
               We built a system to <span className="text-brand-accent font-mono font-normal">standardize</span> minds.
               <br />
               <span className="font-semibold">It worked. Too well.</span>
             </h1>
 
-            {/* Hero Sub-header: Slower, slides in from the right */}
-            <p className="animate-hero-sub text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light tracking-wide">
+            {/* Hero Sub-header */}
+            <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light tracking-wide">
               Industrial-era education optimized for obedience, predictability, and compliance. But modern technical life rewards the exact opposite: <span className="text-white font-medium">autonomy, synthesis, and adversarial reasoning</span>.
             </p>
 
@@ -285,13 +298,13 @@ export default function App() {
                 onClick={() => {
                   document.getElementById('historical-context')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="animate-hero-btn-left px-8 py-4 bg-brand-gray hover:bg-brand-lightGray border border-brand-lightGray text-white text-xs font-mono tracking-widest transition-all rounded hover:border-brand-accent/50 hover:shadow-[0_0_20px_rgba(255,87,51,0.15)]"
+                className="px-8 py-4 bg-brand-gray hover:bg-brand-lightGray border border-brand-lightGray text-white text-xs font-mono tracking-widest transition-all rounded hover:border-brand-accent/50 hover:shadow-[0_0_20px_rgba(255,87,51,0.15)]"
               >
                 BEGIN HISTORICAL INQUIRY
               </button>
               <a
                 href="#sandbox"
-                className="animate-hero-btn-fade text-xs font-mono tracking-widest text-brand-textMuted hover:text-white transition-colors underline underline-offset-4"
+                className="text-xs font-mono tracking-widest text-brand-textMuted hover:text-white transition-colors underline underline-offset-4"
               >
                 SKIP TO LIVE SANDBOX
               </a>
@@ -303,7 +316,7 @@ export default function App() {
             onClick={() => {
               document.getElementById('historical-context')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="animate-hero-scroll absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-4 z-20 cursor-pointer group"
+            className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-4 z-20 cursor-pointer group"
           >
             <span className="text-xs font-mono tracking-[0.3em] text-brand-accent font-semibold uppercase transition-colors group-hover:text-white">
               SCROLL TO DESCEND
