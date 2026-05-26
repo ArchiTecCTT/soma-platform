@@ -351,15 +351,15 @@ body.ci-active {
   white-space: nowrap;
   /* Start: invisible + blurred + slightly small */
   opacity: 0;
-  filter: blur(14px);
-  transform: scale(0.92);
+  filter: blur(16px);
+  transform: scale(0.90);
   will-change: transform, opacity, filter, font-size, letter-spacing;
   transition:
-    opacity     0.85s ease,
-    filter      0.95s ease,
-    transform   1.4s  cubic-bezier(0.22, 1, 0.36, 1),
-    letter-spacing 1.4s cubic-bezier(0.22, 1, 0.36, 1),
-    font-size   1.1s  cubic-bezier(0.22, 1, 0.36, 1);
+    opacity     1.8s  cubic-bezier(0.25, 1, 0.5, 1),
+    filter      2.0s  cubic-bezier(0.25, 1, 0.5, 1),
+    transform   2.2s  cubic-bezier(0.16, 1, 0.3, 1),
+    letter-spacing 2.2s cubic-bezier(0.16, 1, 0.3, 1),
+    font-size   1.2s  cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Reveal: unblur + fade in */
@@ -370,27 +370,22 @@ body.ci-active {
   letter-spacing: 0.08em;
 }
 
-/* Full: // SOMA is now typing, no extra visual change needed */
-.ci-logo--full {
-  letter-spacing: 0.06em;
-}
-
 /* Dock: shrink + fly to nav position */
 .ci-logo--docked {
   font-size: 0.875rem; /* matches nav text-sm */
   letter-spacing: 0.18em;
   transform: translate3d(var(--dock-x, 0px), var(--dock-y, 0px), 0) scale(1);
   transition:
-    font-size      0.75s cubic-bezier(0.22, 1, 0.36, 1),
-    letter-spacing 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-    transform      0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    font-size      1.20s cubic-bezier(0.22, 1, 0.36, 1),
+    letter-spacing 1.20s cubic-bezier(0.22, 1, 0.36, 1),
+    transform      1.20s cubic-bezier(0.22, 1, 0.36, 1),
     opacity        0.4s  ease 0.45s;
 }
 
 /* After dock — fade out so real nav takes over */
 .ci-logo--hidden {
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.35s ease;
 }
 
 /* ORNYX part — always white */
@@ -398,24 +393,44 @@ body.ci-active {
   color: #ffffff;
 }
 
-/* // SOMA part — orange accent */
-.ci-logo__soma {
+/* Slashes (//) part — orange, swooshes from within Ornyx */
+.ci-logo__slashes {
+  display: inline-block;
   color: #FF5733;
-  margin-left: 0.12em;
+  margin-left: 0.18em;
+  opacity: 0;
+  transform: translateX(-40px) scale(0.6);
+  filter: blur(8px);
+  will-change: transform, opacity, filter;
+  transition:
+    opacity 0.9s cubic-bezier(0.25, 1, 0.5, 1),
+    filter 0.9s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 1.2s cubic-bezier(0.16, 1, 0.3, 1); /* custom non-linear curves */
+}
+.ci-logo__slashes--visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  filter: blur(0);
 }
 
-/* ── Typing cursor inside // SOMA ─────────────────────────── */
-.ci-type-cursor {
+/* SOMA part — orange, swooshes in from the slashes 0.5s later */
+.ci-logo__soma {
   display: inline-block;
-  width: 2px;
-  height: 0.9em;
-  background: #FF5733;
-  vertical-align: text-bottom;
-  margin-left: 2px;
-  animation: ci-blink 0.9s steps(2, start) infinite;
+  color: #FF5733;
+  margin-left: 0.20em;
+  opacity: 0;
+  transform: translateX(-55px) scale(0.6);
+  filter: blur(8px);
+  will-change: transform, opacity, filter;
+  transition:
+    opacity 0.9s cubic-bezier(0.25, 1, 0.5, 1),
+    filter 0.9s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 1.2s cubic-bezier(0.16, 1, 0.3, 1); /* custom non-linear curves */
 }
-@keyframes ci-blink {
-  50% { opacity: 0; }
+.ci-logo__soma--visible {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  filter: blur(0);
 }
 
 /* ── Indictment text block ────────────────────────────────── */

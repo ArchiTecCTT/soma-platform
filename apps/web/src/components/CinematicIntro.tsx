@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 
 // ─── State Machine ────────────────────────────────────────────────────────────
-// pre-reveal → reveal → soma-type → dock → indictment-1 → indictment-2
-//           → indictment-3 → indictment-4 → world-open → complete
+// pre-reveal → reveal → slashes-reveal → soma-reveal → dock → indictment-1
+//           → indictment-2 → indictment-3 → indictment-4 → world-open → complete
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type IntroState =
   | 'pre-reveal'
   | 'reveal'
-  | 'soma-type'
+  | 'slashes-reveal'
+  | 'soma-reveal'
   | 'dock'
   | 'indictment-1'
   | 'indictment-2'
@@ -24,11 +25,8 @@ interface CinematicIntroProps {
   navWordmarkRef: React.RefObject<HTMLElement | null>;
 }
 
-const SOMA_LETTERS = ['/', '/', ' ', 'S', 'O', 'M', 'A'];
-
 export default function CinematicIntro({ onComplete, navWordmarkRef }: CinematicIntroProps) {
   const [introState, setIntroState] = useState<IntroState>('pre-reveal');
-  const [somaTyped, setSomaTyped]   = useState(0); // how many chars of "// SOMA" are visible
   const [standardizeOrange, setStandardizeOrange] = useState(false);
   const [standardizePulse,  setStandardizePulse]  = useState(false);
 
@@ -85,40 +83,49 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     // Ensure we can measure before dock transition fires
     pushTimer(measureDockTarget, 0);
 
-    // Act 1 — ORNYX reveal
-    pushTimer(() => setIntroState('reveal'), 300);
+    // Timing timeline:
+    // reveal: ORNYX starts slow majestic fade-in
+    pushTimer(() => setIntroState('reveal'), 500);
 
-    // Act 1b — // SOMA types in
-    pushTimer(() => setIntroState('soma-type'), 1050);
+    // slashes-reveal: // swooshes in (Wait exactly 1.0 second after ORNYX settles at 2500ms -> 3500ms)
+    pushTimer(() => setIntroState('slashes-reveal'), 3500);
 
-    // Type "// SOMA" letter by letter (7 chars × 90 ms each)
-    SOMA_LETTERS.forEach((_, i) => {
-      pushTimer(() => setSomaTyped(i + 1), 1050 + i * 90);
-    });
+    // soma-reveal: SOMA swooshes in from // 0.5 seconds later (3500ms + 500ms = 4000ms)
+    pushTimer(() => setIntroState('soma-reveal'), 4000);
 
-    // Act 2 — dock
+    // dock: Fly to nav (Let SOMA settle for 1.2s + 1.2s rest -> 6400ms)
     pushTimer(() => {
       measureDockTarget();
       setIntroState('dock');
-    }, 1050 + SOMA_LETTERS.length * 90 + 320);
+    }, 6400);
 
-    const dockEnd = 1050 + SOMA_LETTERS.length * 90 + 320 + 820;
+    const dockEnd = 6400 + 1200; // 7600ms
 
-    // Act 3 — Indictment cascade
-    pushTimer(() => setIntroState('indictment-1'), dockEnd + 160);
-    pushTimer(() => setIntroState('indictment-2'), dockEnd + 900);
-    // Colour bleed on standardize starts 300 ms after line 2 appears
-    pushTimer(() => setStandardizeOrange(true), dockEnd + 1200);
-    pushTimer(() => setIntroState('indictment-3'), dockEnd + 1800);
-    pushTimer(() => setIntroState('indictment-4'), dockEnd + 2700);
-    // Pulse on "Too well."
-    pushTimer(() => { setStandardizePulse(true); }, dockEnd + 2700);
-    pushTimer(() => setStandardizePulse(false), dockEnd + 3200);
+    // indictment-1: We built a system to (dockEnd + 600ms rest -> 8200ms)
+    pushTimer(() => setIntroState('indictment-1'), dockEnd + 600);
 
-    // Act 4 — World opens
-    pushTimer(() => setIntroState('world-open'), dockEnd + 3600);
+    // indictment-2: standardize minds (Wait 1600ms -> 9800ms)
+    pushTimer(() => setIntroState('indictment-2'), dockEnd + 2200);
 
-    // Complete
+    // color bleed: standardize orange (Wait 800ms after Line 2 -> 10600ms)
+    pushTimer(() => setStandardizeOrange(true), dockEnd + 3000);
+
+    // indictment-3: It worked. (Wait 2200ms after Line 2 starts -> 12000ms)
+    pushTimer(() => setIntroState('indictment-3'), dockEnd + 4400);
+
+    // indictment-4: Too well. (Wait 1600ms -> 13600ms)
+    pushTimer(() => {
+      setIntroState('indictment-4');
+      setStandardizePulse(true);
+    }, dockEnd + 6000);
+
+    // Turn off pulse glow (Wait 700ms -> 14300ms)
+    pushTimer(() => setStandardizePulse(false), dockEnd + 6700);
+
+    // world-open: cascade main page, unlock scroll, fade overlay (Wait 2400ms after Line 4 starts -> 16000ms)
+    pushTimer(() => setIntroState('world-open'), dockEnd + 8400);
+
+    // complete: unmount overlay (Wait 1800ms after world-open starts -> 17800ms)
     pushTimer(() => {
       if (!isComplete.current) {
         isComplete.current = true;
@@ -127,26 +134,29 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
         setIntroState('complete');
         setTimeout(onComplete, 80);
       }
-    }, dockEnd + 5200);
+    }, dockEnd + 10200);
 
     return clearAllTimers;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Skip on scroll / touch / key ────────────────────────────────────────────
+  // ── Skip on scroll / touch / click / key ─────────────────────────────────────
   useEffect(() => {
     const onWheel  = () => skip();
     const onTouch  = () => skip();
+    const onClick  = () => skip();
     const onKey    = (e: KeyboardEvent) => {
       if ([' ', 'ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Escape'].includes(e.key)) skip();
     };
 
     window.addEventListener('wheel',     onWheel,  { passive: true });
     window.addEventListener('touchmove', onTouch,  { passive: true });
+    window.addEventListener('click',     onClick,  { passive: true });
     window.addEventListener('keydown',   onKey);
 
     return () => {
       window.removeEventListener('wheel',     onWheel);
       window.removeEventListener('touchmove', onTouch);
+      window.removeEventListener('click',     onClick);
       window.removeEventListener('keydown',   onKey);
     };
   }, [skip]);
@@ -164,20 +174,18 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
 
   // ── Derived booleans ─────────────────────────────────────────────────────────
   const states: IntroState[] = [
-    'pre-reveal','reveal','soma-type','dock',
-    'indictment-1','indictment-2','indictment-3','indictment-4',
-    'world-open','complete',
+    'pre-reveal', 'reveal', 'slashes-reveal', 'soma-reveal', 'dock',
+    'indictment-1', 'indictment-2', 'indictment-3', 'indictment-4',
+    'world-open', 'complete',
   ];
   const stateIdx = states.indexOf(introState);
 
-  const past = (s: IntroState) => stateIdx > states.indexOf(s);
   const atOrPast = (s: IntroState) => stateIdx >= states.indexOf(s);
 
   const isDocked         = atOrPast('dock');
   const showIndictment1  = atOrPast('indictment-1');
   const showIndictment2  = atOrPast('indictment-2');
   const showIndictment3  = atOrPast('indictment-3');
-  const showIndictment4  = atOrPast('indictment-4');
   const showWorldOpen    = atOrPast('world-open');
   const overlayDone      = atOrPast('complete');
 
@@ -192,28 +200,36 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
       {/* ── Scanline flicker — single decorative layer ──────────────────── */}
       <div className="ci-scanlines" />
 
-      {/* ── Centered wordmark (Acts 1 & 2) ─────────────────────────────── */}
+      {/* ── Centered wordmark logo (Acts 1 & 2) ─────────────────────────────── */}
       <span
         ref={logoRef}
         id="ci-logo"
         className={[
           'ci-logo',
-          atOrPast('reveal')    ? 'ci-logo--visible'  : '',
-          atOrPast('soma-type') ? 'ci-logo--full'     : '',
-          isDocked              ? 'ci-logo--docked'   : '',
-          past('dock')          ? 'ci-logo--hidden'   : '',
+          atOrPast('reveal')     ? 'ci-logo--visible'  : '',
+          isDocked               ? 'ci-logo--docked'   : '',
+          atOrPast('world-open') ? 'ci-logo--hidden'   : '',
         ].join(' ')}
         style={{ '--dock-x': '0px', '--dock-y': '0px' } as React.CSSProperties}
       >
         <span className="ci-logo__ornyx">ORNYX</span>
         <span
-          className="ci-logo__soma"
+          className={[
+            'ci-logo__slashes',
+            atOrPast('slashes-reveal') ? 'ci-logo__slashes--visible' : '',
+          ].join(' ')}
           aria-hidden="true"
         >
-          {SOMA_LETTERS.slice(0, somaTyped).join('')}
-          {somaTyped < SOMA_LETTERS.length && atOrPast('soma-type') && (
-            <span className="ci-type-cursor" />
-          )}
+          //
+        </span>
+        <span
+          className={[
+            'ci-logo__soma',
+            atOrPast('soma-reveal') ? 'ci-logo__soma--visible' : '',
+          ].join(' ')}
+          aria-hidden="true"
+        >
+          SOMA
         </span>
       </span>
 
@@ -249,7 +265,7 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
 
       {/* ── Skip hint ───────────────────────────────────────────────────── */}
       <div className={`ci-skip ${atOrPast('indictment-1') && !showWorldOpen ? 'ci-skip--visible' : ''}`}>
-        scroll or press any key to skip
+        scroll, click or press any key to skip
       </div>
     </div>
   );
