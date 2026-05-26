@@ -10,6 +10,47 @@ import { consumeReplayJti } from './handoff/replayStore';
 import { z } from 'zod';
 import * as crypto from 'crypto';
 
+// ---------------------------------------------------------------------------//
+// Simple in-memory rate limiter for /rams/analyze                                //
+// Tracks request count per IP within a 1-minute sliding window.                  //
+// ---------------------------------------------------------------------------//
+interface RateLimitEntry {
+  count: number;
+  windowStart: number;
+}
+const rateLimitMap = new Map<string, RateLimitEntry>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 10; // max 10 proxied Gemini calls per IP per minute
+
+/** Clears the in-memory rate-limit map. Exported for test isolation. */
+export function resetRateLimitMap(): void {
+  rateLimitMap.clear();
+}
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { count: 1, windowStart: now });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
+// ---------------------------------------------------------------------------//
+// Allowed CORS origins — tighten from wildcard to explicit list                  //
+// ---------------------------------------------------------------------------//
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:5173', // Vite dev server
+  'http://localhost:4173', // Vite preview
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:4173',
+]);
+
 const ramsAnalyzeSchema = z.object({
   code: z.string().trim().min(1).max(12000),
   explanation: z.string().trim().max(4000).default(''),
@@ -47,10 +88,19 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
   const env = parseApiEnv(rawEnv);
   const app = new Hono();
 
+  // NOTE: allowedOrigins is passed as a Set; cors with function origin receives
+  // (origin) => boolean, which Hono/cors accepts via the `origin` option as a
+  // string array or a callback.
   app.use(
     '*',
     cors({
-      origin: '*',
+      origin: (origin: string) => {
+        if (ALLOWED_ORIGINS.has(origin)) return origin;
+        // Allow requests with no Origin header (e.g., same-origin curl/test)
+        if (!origin) return '*';
+        // Reject unknown origins
+        return '';
+      },
       allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowHeaders: ['Content-Type', 'Authorization'],
     })
@@ -143,28 +193,50 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
         return c.json({ error: 'RAMS reasoning engine is not configured' }, 503);
       }
 
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': env.GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: buildRamsPrompt(code, explanation) }],
+      // Rate-limit check using client IP (from c.req.header('x-forwarded-for') orCF-Connecting-IP, falling back to 'unknown').
+      const ip = c.req.header('x-forwarded-for')?.split(',')[0]?.trim()
+        ?? c.req.header('cf-connecting-ip')?.trim()
+        ?? c.req.header('x-real-ip')?.trim()
+        ?? 'unknown';
+      if (!checkRateLimit(ip)) {
+        return c.json({ error: 'Rate limit exceeded. Try again in 1 minute.' }, 429);
+      }
+
+      const GEMINI_TIMEOUT_MS = 30_000;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
+      let fetchResponse: Response;
+      try {
+        fetchResponse = await fetch(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': env.GEMINI_API_KEY!,
             },
-          ],
-          generationConfig: {
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        }),
-      });
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: 'user',
+                  parts: [{ text: buildRamsPrompt(code, explanation) }],
+                },
+              ],
+              generationConfig: {
+                thinkingConfig: { thinkingBudget: 0 },
+              },
+            }),
+            signal: controller.signal,
+          }
+        );
+      } finally {
+        clearTimeout(timeout);
+      }
 
-      const payload = await response.json();
+      const payload = await fetchResponse.json();
 
-      if (!response.ok) {
+      if (!fetchResponse.ok) {
         const message = payload?.error?.message || 'Gemini request failed';
         return c.json({ error: `RAMS reasoning request failed: ${message}` }, 502);
       }
@@ -176,7 +248,10 @@ export function createApp(rawEnv: Record<string, string | undefined>) {
         const issues = err.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
         return c.json({ error: `Validation failed: ${issues}` }, 400);
       }
-
+      // SurfaceAbortError is thrown when AbortController.abort() is called via timeout
+      if (err instanceof Error && err.name === 'AbortError') {
+        return c.json({ error: 'RAMS reasoning request timed out after 30 seconds.' }, 504);
+      }
       return c.json({ error: 'Failed to generate RAMS critique' }, 500);
     }
   });

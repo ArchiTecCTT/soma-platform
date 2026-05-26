@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { clearReplayStore } from './handoff/replayStore';
-import { createApp } from './index';
+import { createApp, resetRateLimitMap } from './index';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -36,6 +36,7 @@ vi.mock('./store/fileEventStore', async (importOriginal) => {
 describe('Soma API Endpoints', () => {
   beforeEach(() => {
     clearReplayStore();
+    resetRateLimitMap();
   });
   const mockEnv = {
     LIVEKIT_WS_URL: 'wss://example.livekit.cloud',
@@ -226,6 +227,56 @@ describe('Soma API Endpoints', () => {
         'x-goog-api-key': 'gemini-test-key',
       }),
     });
+  });
+
+  it('POST /rams/analyze returns 429 when rate limit is exceeded (10 req/min)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: 'Critique.' }] } }],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const app = createApp(mockEnv);
+    const body = JSON.stringify({ code: 'const x = 1;', explanation: 'Reasoning.' });
+
+    // First 10 requests should succeed
+    for (let i = 0; i < 10; i++) {
+      const res = await app.request('/rams/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+      expect(res.status).toBe(200);
+    }
+
+    // The 11th request should be rate-limited
+    const res = await app.request('/rams/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+    expect(res.status).toBe(429);
+    const resBody = await res.json() as { error: string };
+    expect(resBody.error).toContain('Rate limit');
+  });
+
+  it('POST /rams/analyze returns 504 when Gemini fetch times out', async () => {
+    // Simulate an AbortError from the AbortController timeout
+    const fetchMock = vi.fn().mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const app = createApp(mockEnv);
+    const res = await app.request('/rams/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'const x = 1;', explanation: 'Reasoning.' }),
+    });
+
+    expect(res.status).toBe(504);
+    const resBody = await res.json() as { error: string };
+    expect(resBody.error).toContain('timed out');
   });
 
   describe('POST /handoff/bootstrap', () => {

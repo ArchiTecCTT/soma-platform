@@ -967,7 +967,7 @@ export default function App() {
             <a href="#comparison" className="hover:text-white transition-colors">Demo</a>
             <a href="#narrative" className="hover:text-white transition-colors">About</a>
             <a href="mailto:founders@soma.intelligence" className="hover:text-white transition-colors">Contact</a>
-            <a href="#hero" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#narrative" className="hover:text-white transition-colors">Privacy</a>
             <a href="https://github.com/ArchiTecCTT/soma-platform" className="hover:text-white transition-colors">GitHub</a>
           </div>
 

@@ -243,3 +243,44 @@ button, input, textarea { font: inherit; }
 .animate-scroll-flow {
   animation: scrollFlow 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
 }
+
+/* ============================================
+   PREFERS-REDUCED-MOTION FALLBACK
+   Disable all continuous / decorative animations
+   for users who have requested reduced motion.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  /* Tailwind continuous animation utilities */
+  .animate-pulse,
+  .animate-ping,
+  .animate-spin {
+    animation: none !important;
+  }
+
+  /* Hero entry animations — instant reveal instead */
+  .animate-hero-title,
+  .animate-hero-sub,
+  .animate-hero-btn-left,
+  .animate-hero-btn-fade,
+  .animate-hero-scroll {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Scroll indicator flowing light — static instead */
+  .animate-scroll-flow {
+    animation: none !important;
+  }
+
+  /* Glitch text — purely decorative; disable entirely */
+  .glitch-text::before,
+  .glitch-text::after {
+    animation: none !important;
+  }
+
+  /* Ambient glow blobs — disable parallax scroll transform */
+  .glow-blob {
+    transition: none !important;
+  }
+}
