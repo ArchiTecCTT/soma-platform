@@ -14,6 +14,7 @@ import {
   buildSessionCookies,
   sessionMiddleware,
   csrfMiddleware,
+  startSessionCleanup,
 } from './session';
 import { z } from 'zod';
 import * as crypto from 'crypto';
@@ -89,6 +90,7 @@ function extractGeminiText(payload: any) {
 export function createApp(rawEnv: Record<string, string | undefined>) {
   const env = parseApiEnv(rawEnv);
   const app = new Hono();
+  startSessionCleanup();
   const allowedOrigins = parseAllowedOrigins(env.ALLOWED_WEB_ORIGINS);
 
   // NOTE: allowedOrigins is passed as a Set; cors with function origin receives

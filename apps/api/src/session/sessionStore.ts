@@ -108,6 +108,10 @@ export function startSessionCleanup(): void {
       }
     }
   }, CLEANUP_INTERVAL_MS);
+  // Don't prevent process exit (important for tests and CLI usage)
+  if (cleanupTimer && typeof cleanupTimer === 'object' && 'unref' in cleanupTimer) {
+    cleanupTimer.unref();
+  }
 }
 
 /**

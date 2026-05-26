@@ -10,7 +10,7 @@
 
 import type { Context, Next } from 'hono';
 import { getCookie } from 'hono/cookie';
-import * as crypto from 'crypto';
+import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { getSession, touchSession } from './sessionStore';
 
 const SESSION_COOKIE = '__Host-soma-session';
@@ -28,7 +28,7 @@ const DEFAULT_ALLOWED_ORIGINS = new Set([
 ]);
 
 export function generateCsrfToken(): string {
-  return crypto.randomBytes(32).toString('hex');
+  return randomBytes(32).toString('hex');
 }
 
 function isSecureRequest(c: Context): boolean {
@@ -46,12 +46,16 @@ function parseRefererOrigin(referer: string): string {
   }
 }
 
-function readSessionId(c: Context): string | undefined {
-  return getCookie(c, SESSION_COOKIE) ?? getCookie(c, SESSION_COOKIE_FALLBACK);
+function readSessionId(c: Context, secure: boolean): string | undefined {
+  const hostCookie = getCookie(c, SESSION_COOKIE);
+  if (hostCookie) return hostCookie;
+  return secure ? undefined : getCookie(c, SESSION_COOKIE_FALLBACK);
 }
 
-function readCsrfToken(c: Context): string | undefined {
-  return getCookie(c, CSRF_COOKIE) ?? getCookie(c, CSRF_COOKIE_FALLBACK);
+function readCsrfToken(c: Context, secure: boolean): string | undefined {
+  const hostCookie = getCookie(c, CSRF_COOKIE);
+  if (hostCookie) return hostCookie;
+  return secure ? undefined : getCookie(c, CSRF_COOKIE_FALLBACK);
 }
 
 function isSkipped(path: string, skippedPaths: string[]) {
@@ -65,7 +69,8 @@ export function sessionMiddleware(unauthenticatedPaths: string[] = []) {
       return;
     }
 
-    const sessionId = readSessionId(c);
+    const secure = isSecureRequest(c);
+    const sessionId = readSessionId(c, secure);
     if (!sessionId) {
       return c.json({ error: 'Session required. Please start a session via /handoff/bootstrap.' }, 401);
     }
@@ -81,7 +86,10 @@ export function sessionMiddleware(unauthenticatedPaths: string[] = []) {
 
     c.set(SESSION_CONTEXT_KEY, { id: sessionId, data: sessionData });
     await next();
-    touchSession(sessionId);
+    // Only extend session TTL if the request succeeded (2xx)
+    if (c.res.status >= 200 && c.res.status < 300) {
+      touchSession(sessionId);
+    }
   };
 }
 
@@ -92,13 +100,23 @@ export function csrfMiddleware(unauthenticatedPaths: string[] = [], allowedOrigi
       return;
     }
 
-    const csrfToken = readCsrfToken(c);
+    const secure = isSecureRequest(c);
+    const csrfToken = readCsrfToken(c, secure);
     if (!csrfToken) {
       return c.json({ error: 'CSRF token missing. Refresh the page and try again.' }, 403);
     }
 
     const headerToken = c.req.header('X-Session-Token');
-    if (!headerToken || headerToken !== csrfToken) {
+    if (!headerToken) {
+      return c.json({ error: 'Invalid CSRF token. If you are seeing this unexpectedly, please refresh the page.' }, 403);
+    }
+    try {
+      const headerBuf = Buffer.from(headerToken);
+      const csrfBuf = Buffer.from(csrfToken);
+      if (headerBuf.length !== csrfBuf.length || !timingSafeEqual(headerBuf, csrfBuf)) {
+        return c.json({ error: 'Invalid CSRF token. If you are seeing this unexpectedly, please refresh the page.' }, 403);
+      }
+    } catch {
       return c.json({ error: 'Invalid CSRF token. If you are seeing this unexpectedly, please refresh the page.' }, 403);
     }
 
