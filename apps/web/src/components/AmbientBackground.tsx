@@ -71,7 +71,7 @@ export default function AmbientBackground() {
           baseX: width * 0.25,
           baseY: height * 0.25,
           radius: Math.min(width, height) * 0.4,
-          color: 'rgba(255, 87, 51, 0.07)', // SOMA orange-red
+          color: 'rgba(255, 87, 51, 0.18)', // SOMA orange-red
           angle: 0,
           speed: 0.0012,
           driftRange: 80,
@@ -82,7 +82,7 @@ export default function AmbientBackground() {
           baseX: width * 0.75,
           baseY: height * 0.35,
           radius: Math.min(width, height) * 0.45,
-          color: 'rgba(0, 240, 255, 0.04)', // SOMA cyan
+          color: 'rgba(0, 240, 255, 0.10)', // SOMA cyan
           angle: Math.PI / 2,
           speed: 0.0008,
           driftRange: 100,
@@ -93,7 +93,7 @@ export default function AmbientBackground() {
           baseX: width * 0.4,
           baseY: height * 0.7,
           radius: Math.min(width, height) * 0.5,
-          color: 'rgba(99, 102, 241, 0.05)', // Deep Royal Purple
+          color: 'rgba(99, 102, 241, 0.14)', // Deep Royal Purple
           angle: Math.PI,
           speed: 0.0006,
           driftRange: 120,
@@ -104,7 +104,7 @@ export default function AmbientBackground() {
           baseX: width * 0.8,
           baseY: height * 0.8,
           radius: Math.min(width, height) * 0.35,
-          color: 'rgba(148, 163, 184, 0.03)', // Soft Slate Glow
+          color: 'rgba(148, 163, 184, 0.08)', // Soft Slate Glow
           angle: Math.PI * 1.5,
           speed: 0.001,
           driftRange: 60,
@@ -115,7 +115,7 @@ export default function AmbientBackground() {
     // Initialize 55 particles
     const initializeParticles = () => {
       particles = Array.from({ length: 55 }, () => {
-        const baseAlpha = Math.random() * 0.35 + 0.1;
+        const baseAlpha = Math.random() * 0.45 + 0.4;
         return {
           x: Math.random() * width,
           y: Math.random() * height,
