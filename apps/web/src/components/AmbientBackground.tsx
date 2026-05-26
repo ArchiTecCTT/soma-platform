@@ -18,9 +18,7 @@ interface Particle {
   vx: number;
   vy: number;
   radius: number;
-  alpha: number;
   baseAlpha: number;
-  speed: number;
   wobbleSpeed: number;
   wobbleRange: number;
   wobbleAngle: number;
@@ -124,9 +122,7 @@ export default function AmbientBackground() {
           vx: (Math.random() - 0.5) * 0.1,
           vy: - (Math.random() * 0.25 + 0.15), // Upward drift
           radius: Math.random() * 1.8 + 0.6,
-          alpha: baseAlpha,
           baseAlpha: baseAlpha,
-          speed: Math.random() * 0.15 + 0.08,
           wobbleSpeed: Math.random() * 0.015 + 0.005,
           wobbleRange: Math.random() * 0.4 + 0.1,
           wobbleAngle: Math.random() * Math.PI * 2,
