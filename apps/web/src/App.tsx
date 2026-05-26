@@ -13,6 +13,15 @@ function getAiClient() {
   return new GoogleGenAI({ apiKey: geminiApiKey });
 }
 
+// Strip template-literal and backtick chars from user input before it enters the
+// Gemini prompt, so a malicious user cannot escape the code block or the prompt.
+function sanitizePromptInput(input: string): string {
+  return input
+    .replace(/`/g, '\`')
+    .replace(/\$\{/g, '\${')
+    .slice(0, 8000);
+}
+
 export default function App() {
   // Loading Screen State
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -22,7 +31,7 @@ export default function App() {
   // Narrative Navigation State
   const [activeSection, setActiveSection] = useState<string>('hero');
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
-  
+
   // Interactive Sandbox State
   const [code, setCode] = useState<string>(DEFAULT_FLAWED_CODE);
   const [explanation, setExplanation] = useState<string>('');
@@ -56,13 +65,14 @@ export default function App() {
       'LOADING RAMS REASONING ENGINE...',
       'READY.'
     ];
-    
+
     let currentStatusIdx = 0;
+    let doneTimeout: ReturnType<typeof setTimeout> | undefined;
     const interval = setInterval(() => {
       setLoadingProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(() => setIsLoading(false), 600);
+          doneTimeout = setTimeout(() => setIsLoading(false), 600);
           return 100;
         }
         const nextProgress = prev + Math.floor(Math.random() * 15) + 5;
@@ -74,35 +84,59 @@ export default function App() {
       });
     }, 150);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (doneTimeout !== undefined) clearTimeout(doneTimeout);
+    };
   }, []);
 
-  // Scroll tracking & Scrollytelling 2.0 Engine
+  // Scroll tracking & Scrollytelling 2.0 Engine - rAF for scrollY/progress, IntersectionObserver for active section
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScroll = window.scrollY;
-      setScrollY(currentScroll);
+    let rafId: number;
+    let lastScrollY = 0;
 
-      // Calculate overall page scroll progress
+    const updateScroll = () => {
+      const currentScroll = window.scrollY;
+      lastScrollY = currentScroll;
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (totalHeight > 0) {
-        setScrollProgress(currentScroll / totalHeight);
-      }
-      
-      // Scrollytelling section detector
-      const sections = ['narrative', 'historical-context', 'world-changed', 'sandbox', 'comparison', 'roadmap'];
-      for (const section of sections) {
-        const el = document.getElementById(section);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top < window.innerHeight * 0.5 && rect.bottom > window.innerHeight * 0.5) {
-            setActiveSection(section);
-          }
-        }
-      }
+      setScrollY(currentScroll);
+      setScrollProgress(totalHeight > 0 ? currentScroll / totalHeight : 0);
     };
+
+    const handleScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateScroll);
+    };
+
+    const sectionIds = ['narrative', 'historical-context', 'world-changed', 'sandbox', 'comparison', 'roadmap'];
+    const observers: IntersectionObserver[] = [];
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setActiveSection(id);
+            }
+          });
+        },
+        { threshold: 0.4 }
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    handleScroll(); // run once to set initial values
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScroll);
+      observers.forEach((o) => o.disconnect());
+    };
   }, []);
 
   // Simulate audio waveform when RAMS is "speaking"
@@ -140,21 +174,21 @@ export default function App() {
 
     try {
       const prompt = `
-        You are RAMS, an adversarial voice-first AI mentor for elite technical builders. 
-        Your job is to challenge weak reasoning, point out hidden assumptions, and push the user to think from first principles. 
-        Do not passively agree. Be sharp, intellectually rigorous, and direct. 
-        
+        You are RAMS, an adversarial voice-first AI mentor for elite technical builders.
+        Your job is to challenge weak reasoning, point out hidden assumptions, and push the user to think from first principles.
+        Do not passively agree. Be sharp, intellectually rigorous, and direct.
+
         Here is the user's current code in the sandbox:
         \`\`\`javascript
-        ${code}
+        ${sanitizePromptInput(code)}
         \`\`\`
 
         Here is the user's explanation of their reasoning:
-        "${explanation}"
+        "${sanitizePromptInput(explanation)}"
 
         Analyze their code and explanation. Identify if they successfully resolved the race condition (e.g., using atomic operations, locks, or proper timestamp synchronization) and the precision loss.
         If they did not, challenge them directly on why their solution fails. If they did, challenge them on edge cases (e.g., clock drift, memory overhead, or starvation).
-        
+
         Keep your response concise (under 4 sentences), highly technical, and adversarial. Do not say "Great job!" or "Excellent!". Start directly with the critique.
       `;
 
@@ -172,7 +206,7 @@ export default function App() {
       });
 
       const ramsResponse = response.text || "I detect no rigorous reasoning here. Try again.";
-      
+
       setChatHistory(prev => [
         ...prev,
         { sender: 'user', text: explanation || "Modified code in sandbox.", timestamp: new Date().toLocaleTimeString() },
@@ -218,11 +252,11 @@ export default function App() {
             <div className="w-4 h-4 bg-brand-accent animate-ping rounded-full"></div>
             <span className="font-mono tracking-[0.3em] text-sm font-bold text-white">ORNYX // SOMA</span>
           </div>
-          
+
           <div className="space-y-2">
             <div className="h-1 w-full bg-brand-gray rounded-full overflow-hidden">
-              <div 
-                style={{ width: `${loadingProgress}%` }} 
+              <div
+                style={{ width: `${loadingProgress}%` }}
                 className="h-full bg-gradient-to-r from-brand-accent to-brand-cyan transition-all duration-150"
               ></div>
             </div>
@@ -238,13 +272,13 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-brand-black text-gray-100 selection:bg-brand-accent selection:text-black">
-      
+
       {/* Ambient Background Glows driven by scroll position */}
-      <div 
+      <div
         style={{ transform: `translate(${scrollY * 0.1}px, ${scrollY * 0.05}px)` }}
         className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-accent/10 rounded-full glow-blob transition-transform duration-300"
       ></div>
-      <div 
+      <div
         style={{ transform: `translate(-${scrollY * 0.08}px, -${scrollY * 0.04}px)` }}
         className="absolute top-2/3 right-1/4 w-[500px] h-[500px] bg-brand-cyan/5 rounded-full glow-blob transition-transform duration-300"
       ></div>
@@ -262,8 +296,8 @@ export default function App() {
           <a href="#roadmap" className={`transition-colors ${activeSection === 'roadmap' ? 'text-white' : 'hover:text-white'}`}>04 / ROADMAP</a>
         </nav>
         <div>
-          <a 
-            href="#cta" 
+          <a
+            href="#cta"
             className="px-4 py-1.5 border border-brand-accent/40 hover:border-brand-accent text-brand-accent hover:bg-brand-accent/10 transition-all text-xs font-mono tracking-wider rounded"
           >
             INITIATE SESSION
@@ -277,11 +311,11 @@ export default function App() {
         {/* SECTION 1: Hook (Immersive Storytelling) */}
         <section id="narrative" className="relative min-h-[95vh] flex flex-col justify-center items-center px-6 text-center overflow-hidden border-b border-brand-gray">
           {/* Subtle background grid with parallax effect */}
-          <div 
+          <div
             style={{ transform: `translateY(${scrollY * 0.15}px)` }}
             className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 pointer-events-none"
           ></div>
-          
+
           <div className="max-w-4xl mx-auto z-10 space-y-10">
             {/* Hero Title: Slower, premium entry animation */}
             <h1 className="animate-hero-title text-5xl md:text-7xl font-light tracking-tight text-white leading-tight font-display">
@@ -289,7 +323,7 @@ export default function App() {
               <br />
               <span className="font-semibold">It worked. Too well.</span>
             </h1>
-            
+
             {/* Hero Sub-header: Slower, slides in from the right */}
             <p className="animate-hero-sub text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light tracking-wide">
               Industrial-era education optimized for obedience, predictability, and compliance. But modern technical life rewards the exact opposite: <span className="text-white font-medium">autonomy, synthesis, and adversarial reasoning</span>.
@@ -297,7 +331,7 @@ export default function App() {
 
             {/* Hero Buttons: Sequenced left-slide and fade-in */}
             <div className="pt-6 flex flex-col sm:flex-row justify-center items-center gap-8">
-              <button 
+              <button
                 onClick={() => {
                   document.getElementById('historical-context')?.scrollIntoView({ behavior: 'smooth' });
                 }}
@@ -305,7 +339,7 @@ export default function App() {
               >
                 BEGIN HISTORICAL INQUIRY
               </button>
-              <a 
+              <a
                 href="#sandbox"
                 className="animate-hero-btn-fade text-xs font-mono tracking-widest text-brand-textMuted hover:text-white transition-colors underline underline-offset-4"
               >
@@ -315,7 +349,7 @@ export default function App() {
           </div>
 
           {/* Scroll indicator: Highly visible, static text, flowing light track */}
-          <div 
+          <div
             onClick={() => {
               document.getElementById('historical-context')?.scrollIntoView({ behavior: 'smooth' });
             }}
@@ -336,12 +370,11 @@ export default function App() {
           {/* Self-drawing SVG line connecting the beats driven by scroll progress */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
             <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-              <path 
-                d="M 100 100 Q 300 300 500 100 T 900 400" 
-                fill="none" 
-                stroke="#FF5733" 
-                strokeWidth="2" 
-                className="draw-path"
+              <path
+                d="M 100 100 Q 300 300 500 100 T 900 400"
+                fill="none"
+                stroke="#FF5733"
+                strokeWidth="2"
                 style={{ strokeDashoffset: 1000 - (scrollProgress * 1000) }}
               />
             </svg>
@@ -360,8 +393,8 @@ export default function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {HISTORICAL_BEATS.map((beat, idx) => (
-                <div 
-                  key={beat.id} 
+                <div
+                  key={beat.id}
                   className="p-6 border border-brand-gray bg-brand-black/80 rounded-lg hover:border-brand-accent/40 transition-all duration-500 group"
                 >
                   <div className="flex justify-between items-start mb-6">
@@ -379,7 +412,7 @@ export default function App() {
             </div>
 
             <div className="flex justify-center">
-              <button 
+              <button
                 onClick={() => {
                   document.getElementById('world-changed')?.scrollIntoView({ behavior: 'smooth' });
                 }}
@@ -542,9 +575,9 @@ export default function App() {
                 <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40"></div>
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500/40"></div>
               </div>
-              
+
               <div className="text-brand-textMuted border-b border-brand-gray pb-2">STANDARD_AI_SESSION.log</div>
-              
+
               <div className="space-y-3">
                 <div className="text-brand-cyan">
                   <span className="text-brand-textMuted">[USER]:</span> "Is my O(N^2) bubble sort fine for this 10M record database?"
@@ -576,7 +609,7 @@ export default function App() {
               Soma does not write your code for you. It does not agree with your weak assumptions. Powered by <span className="text-white font-medium">RAMS</span>, a voice-first AI mentor, Soma challenges your reasoning, inspects your live sandbox state, and forces you to synthesize understanding.
             </p>
             <div className="pt-4">
-              <a 
+              <a
                 href="#sandbox"
                 className="px-8 py-3 bg-brand-accent hover:bg-brand-accent/90 text-black text-xs font-mono font-bold tracking-widest transition-all rounded inline-block"
               >
@@ -600,7 +633,7 @@ export default function App() {
 
             {/* Interactive Sandbox Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
+
               {/* Left Column: Code Sandbox (5 cols) */}
               <div className="lg:col-span-5 flex flex-col border border-brand-gray bg-brand-black rounded-lg overflow-hidden">
                 <div className="bg-brand-dark px-4 py-3 border-b border-brand-gray flex justify-between items-center">
@@ -608,7 +641,7 @@ export default function App() {
                     <span className="w-2 h-2 rounded-full bg-brand-cyan"></span>
                     <span>sandbox_environment.js</span>
                   </span>
-                  <button 
+                  <button
                     onClick={handleResetSandbox}
                     className="text-[10px] font-mono text-brand-textMuted hover:text-white transition-colors"
                   >
@@ -618,6 +651,7 @@ export default function App() {
                 <textarea
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
+                  aria-label="Sandbox code editor"
                   className="flex-grow p-4 bg-brand-black text-brand-cyan font-mono text-xs leading-relaxed focus:outline-none resize-none min-h-[350px] lg:min-h-[450px]"
                   spellCheck="false"
                 />
@@ -640,11 +674,11 @@ export default function App() {
                 {/* Chat History */}
                 <div className="flex-grow p-4 space-y-4 overflow-y-auto max-h-[300px] lg:max-h-[350px] min-h-[250px]">
                   {chatHistory.map((msg, idx) => (
-                    <div 
-                      key={idx} 
+                    <div
+                      key={idx}
                       className={`p-3 rounded-lg text-xs font-mono leading-relaxed ${
-                        msg.sender === 'rams' 
-                          ? 'bg-brand-dark border-l-2 border-brand-accent text-brand-textMuted' 
+                        msg.sender === 'rams'
+                          ? 'bg-brand-dark border-l-2 border-brand-accent text-brand-textMuted'
                           : 'bg-brand-lightGray/30 border-l-2 border-brand-cyan text-white'
                       }`}
                     >
@@ -662,9 +696,9 @@ export default function App() {
                   <span className="text-[10px] font-mono text-brand-textMuted">RAMS VOICE FEED</span>
                   <div className="flex items-end space-x-1 h-8">
                     {waveformBars.map((height, idx) => (
-                      <div 
-                        key={idx} 
-                        style={{ height: `${height}%` }} 
+                      <div
+                        key={idx}
+                        style={{ height: `${height}%` }}
                         className={`w-1 rounded-t transition-all duration-100 ${isAudioPlaying ? 'bg-brand-accent' : 'bg-brand-gray'}`}
                       ></div>
                     ))}
@@ -676,6 +710,7 @@ export default function App() {
                   <textarea
                     value={explanation}
                     onChange={(e) => setExplanation(e.target.value)}
+                    aria-label="Explain your reasoning or proposed fix here"
                     placeholder="Explain your reasoning or proposed fix here..."
                     className="w-full p-3 bg-brand-black border border-brand-gray rounded-lg text-xs font-mono text-white focus:outline-none focus:border-brand-accent resize-none h-20"
                   />
@@ -706,7 +741,7 @@ export default function App() {
                     <span>STATE_INSPECTION.log</span>
                   </span>
                 </div>
-                
+
                 <div className="flex-grow p-4 font-mono text-[10px] space-y-3 overflow-y-auto max-h-[400px]">
                   {eventLogs.map((log, idx) => (
                     <div key={idx} className="border-b border-brand-gray/30 pb-2">
@@ -839,11 +874,11 @@ export default function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {ROADMAP.map((phase, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className={`p-6 border rounded-lg relative ${
-                    phase.status === 'current' 
-                      ? 'border-brand-accent bg-brand-accent/5' 
+                    phase.status === 'current'
+                      ? 'border-brand-accent bg-brand-accent/5'
                       : 'border-brand-gray bg-brand-dark/30'
                   }`}
                 >
@@ -928,20 +963,22 @@ export default function App() {
             </p>
 
             {/* Early Access Form */}
-            <form 
+            <form
               onSubmit={(e) => {
                 e.preventDefault();
                 alert("Access request received. Your cognitive profile has been queued.");
               }}
               className="max-w-md mx-auto flex flex-col sm:flex-row gap-3"
             >
-              <input 
-                type="email" 
+              <input
+                type="email"
+                id="early-access-email"
+                aria-label="Engineering email address"
                 required
                 placeholder="Enter your engineering email..."
                 className="flex-grow px-4 py-3 bg-brand-dark border border-brand-gray rounded-lg text-xs font-mono text-white focus:outline-none focus:border-brand-accent"
               />
-              <button 
+              <button
                 type="submit"
                 className="px-6 py-3 bg-brand-accent hover:bg-brand-accent/90 text-black text-xs font-mono font-bold tracking-widest transition-all rounded-lg"
               >
@@ -968,7 +1005,7 @@ export default function App() {
             <div className="w-2.5 h-2.5 bg-brand-accent rounded-full"></div>
             <span className="text-white font-bold tracking-widest">ORNYX // SOMA</span>
           </div>
-          
+
           <div className="flex flex-wrap justify-center gap-8">
             <a href="#" className="hover:text-white transition-colors">Docs</a>
             <a href="#" className="hover:text-white transition-colors">Demo</a>

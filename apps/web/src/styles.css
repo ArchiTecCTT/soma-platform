@@ -19,6 +19,7 @@
 
   /* Fonts */
   --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Bricolage Grotesque', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
@@ -90,8 +91,6 @@
 *, :before, :after { box-sizing: border-box; }
 html, body, #root { min-height: 100%; margin: 0; }
 body {
-  background: var(--color-soma-bg);
-  color: var(--color-soma-fg);
   font-family: var(--font-sans);
 }
 code, pre, textarea, .mono { font-family: var(--font-mono); }
@@ -101,4 +100,146 @@ button, input, textarea { font: inherit; }
 @layer base {
   * { border-color: var(--border); }
   body { background-color: var(--background); color: var(--foreground); }
+}
+
+/* ============================================
+   ANIMATION & VISUAL EFFECTS
+   Moved from index.html inline <style> block
+   ============================================ */
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #030303; }
+::-webkit-scrollbar-thumb { background: #1E1E1E; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #FF5733; }
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(13, 13, 13, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.glass-panel-accent {
+  background: rgba(255, 87, 51, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 87, 51, 0.15);
+}
+
+/* Ambient Background Glows */
+.glow-blob {
+  filter: blur(120px);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+/* Self-Drawing SVG Path — scroll-driven via inline strokeDashoffset */
+.draw-path {
+  stroke-dasharray: 1000;
+}
+
+/* Kinetic Typography & Glitch Effects */
+.glitch-text {
+  position: relative;
+}
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #030303;
+}
+.glitch-text::before {
+  left: 2px;
+  text-shadow: -1px 0 #00F0FF;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+.glitch-text::after {
+  left: -2px;
+  text-shadow: -1px 0 #FF5733;
+  clip: rect(85px, 450px, 140px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% { clip: rect(31px, 9999px, 94px, 0); }
+  10% { clip: rect(112px, 9999px, 76px, 0); }
+  20% { clip: rect(85px, 9999px, 5px, 0); }
+  30% { clip: rect(27px, 9999px, 115px, 0); }
+  40% { clip: rect(73px, 9999px, 29px, 0); }
+  50% { clip: rect(118px, 9999px, 142px, 0); }
+  60% { clip: rect(9px, 9999px, 53px, 0); }
+  70% { clip: rect(131px, 9999px, 88px, 0); }
+  80% { clip: rect(45px, 9999px, 122px, 0); }
+  90% { clip: rect(14px, 9999px, 92px, 0); }
+  100% { clip: rect(67px, 9999px, 105px, 0); }
+}
+
+@keyframes glitch-anim2 {
+  0% { clip: rect(76px, 9999px, 116px, 0); }
+  11% { clip: rect(43px, 9999px, 98px, 0); }
+  22% { clip: rect(122px, 9999px, 14px, 0); }
+  33% { clip: rect(5px, 9999px, 85px, 0); }
+  44% { clip: rect(94px, 9999px, 53px, 0); }
+  55% { clip: rect(11px, 9999px, 128px, 0); }
+  66% { clip: rect(139px, 9999px, 74px, 0); }
+  77% { clip: rect(52px, 9999px, 111px, 0); }
+  88% { clip: rect(103px, 9999px, 22px, 0); }
+  99% { clip: rect(18px, 9999px, 145px, 0); }
+  100% { clip: rect(89px, 9999px, 63px, 0); }
+}
+
+/* Slow premium entry animations */
+@keyframes slowFadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slowFadeInRight {
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slowFadeInLeft {
+  from { opacity: 0; transform: translateX(-50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slowFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scrollFlow {
+  0% { top: -100%; }
+  100% { top: 100%; }
+}
+
+.animate-hero-title {
+  opacity: 0;
+  animation: slowFadeInUp 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-hero-sub {
+  opacity: 0;
+  animation: slowFadeInRight 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 400ms;
+}
+.animate-hero-btn-left {
+  opacity: 0;
+  animation: slowFadeInLeft 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 800ms;
+}
+.animate-hero-btn-fade {
+  opacity: 0;
+  animation: slowFadeIn 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 1200ms;
+}
+.animate-hero-scroll {
+  opacity: 0;
+  animation: slowFadeIn 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 1600ms;
+}
+.animate-scroll-flow {
+  animation: scrollFlow 2s cubic-bezier(0.25, 1, 0.5, 1) infinite;
 }
