@@ -203,7 +203,7 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-brand-black flex flex-col justify-center items-center p-6 select-none">
+      <div className="min-h-screen flex flex-col justify-center items-center p-6 select-none">
         <div className="max-w-md w-full space-y-8 text-center">
           <div className="flex justify-center items-center space-x-3">
             <div className="w-4 h-4 bg-brand-accent animate-ping rounded-full"></div>
@@ -228,7 +228,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-brand-black text-gray-100 selection:bg-brand-accent selection:text-black">
+    <div className="min-h-screen flex flex-col text-gray-100 selection:bg-brand-accent selection:text-black">
 
       {/* Ambient Background Motion */}
       <AmbientBackground />
