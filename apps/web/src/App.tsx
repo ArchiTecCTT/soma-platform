@@ -16,7 +16,7 @@ export default function App() {
 
   // Cinematic Intro State
   const [introVisible, setIntroVisible] = useState<boolean>(true);
-  const navWordmarkRef = useRef<HTMLElement | null>(null);
+  const navWordmarkRef = useRef<HTMLSpanElement | null>(null);
 
   // Narrative Navigation State
   const [activeSection, setActiveSection] = useState<string>('hero');
@@ -254,7 +254,7 @@ export default function App() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-brand-black/80 backdrop-blur-md border-b border-brand-gray px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-3">
           <div className="w-3 h-3 bg-brand-accent animate-pulse rounded-full"></div>
-          <span ref={navWordmarkRef as React.RefObject<HTMLSpanElement>} className="ci-nav-wordmark font-mono tracking-widest text-sm font-bold text-white">ORNYX // SOMA</span>
+          <span ref={navWordmarkRef} className="ci-nav-wordmark font-mono tracking-widest text-sm font-bold text-white">ORNYX // SOMA</span>
         </div>
         <nav className="hidden md:flex space-x-8 text-xs font-mono tracking-wider text-brand-textMuted">
           <a href="#narrative" className={`transition-colors ${activeSection === 'narrative' ? 'text-brand-accent' : 'hover:text-white'}`}>01 / THE PROBLEM</a>
@@ -286,9 +286,16 @@ export default function App() {
           <div className="ci-hero-content max-w-4xl mx-auto z-10 space-y-10">
             {/* Hero Title */}
             <h1 className="text-5xl md:text-7xl font-light tracking-tight text-white leading-tight font-display">
-              We built a system to <span className="text-brand-accent font-mono font-normal">standardize</span> minds.
-              <br />
-              <span className="font-semibold">It worked. Too well.</span>
+              <span className="ci-hero-line-1 block overflow-hidden w-full">
+                <span className="ci-hero-word-slide block">
+                  We built a system to <span className="text-brand-accent font-mono font-normal ci-hero-standardize">standardize</span> minds.
+                </span>
+              </span>
+              <span className="ci-hero-line-2 block overflow-hidden w-full">
+                <span className="ci-hero-word-slide ci-hero-word-slide--delay block font-semibold">
+                  It worked. Too well.
+                </span>
+              </span>
             </h1>
 
             {/* Hero Sub-header */}

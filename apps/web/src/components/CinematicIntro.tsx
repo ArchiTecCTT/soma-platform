@@ -22,7 +22,7 @@ interface CinematicIntroProps {
   /** Called once the intro fully completes so App can unmount the overlay */
   onComplete: () => void;
   /** Ref to the nav wordmark so we can measure its position for the dock */
-  navWordmarkRef: React.RefObject<HTMLElement | null>;
+  navWordmarkRef: React.RefObject<HTMLSpanElement | null>;
 }
 
 export default function CinematicIntro({ onComplete, navWordmarkRef }: CinematicIntroProps) {
@@ -68,9 +68,9 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     document.body.classList.remove('ci-active');
     document.body.classList.add('ci-done');
     setIntroState('complete');
-    // Short delay so React can flush, then call onComplete
-    setTimeout(onComplete, 80);
-  }, [clearAllTimers, onComplete]);
+    // Safe tracked unmount callback execution to prevent state updates on unmounted component
+    pushTimer(onComplete, 80);
+  }, [clearAllTimers, onComplete, pushTimer]);
 
   // ── Main sequence ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -117,35 +117,42 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     pushTimer(() => setStandardizeOrange(true), dockEnd + 4900);
 
     // world-open: cascade main page, unlock scroll, fade overlay (Wait 2.8s after bleed starts -> 14600ms)
-    pushTimer(() => setIntroState('world-open'), dockEnd + 7700);
+    // Toggles body classes here so hero section cascades and scroll unlocks during overlay 0.7s fade-out (fixes Coderabbit/Copilot)
+    pushTimer(() => {
+      setIntroState('world-open');
+      document.body.classList.remove('ci-active');
+      document.body.classList.add('ci-done');
+    }, dockEnd + 7700);
 
     // complete: unmount overlay (Wait 1600ms after world-open starts -> 16200ms)
+    // Deferred until overlay has fully faded out to prevent visual cuts (fixes Sentry)
     pushTimer(() => {
       if (!isComplete.current) {
         isComplete.current = true;
-        document.body.classList.remove('ci-active');
-        document.body.classList.add('ci-done');
         setIntroState('complete');
-        setTimeout(onComplete, 80);
+        pushTimer(onComplete, 80);
       }
     }, dockEnd + 9300);
 
-    return clearAllTimers;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // Clean up timers and restore scroll lock state if component unmounts prematurely (fixes Copilot)
+    return () => {
+      clearAllTimers();
+      document.body.classList.remove('ci-active');
+    };
+  }, [clearAllTimers, measureDockTarget, onComplete, pushTimer, skip]);
 
   // ── Skip on scroll / touch / click / key ─────────────────────────────────────
   useEffect(() => {
     const onWheel  = () => skip();
     const onTouch  = () => skip();
     const onClick  = () => skip();
-    const onKey    = (e: KeyboardEvent) => {
-      if ([' ', 'ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Escape'].includes(e.key)) skip();
-    };
+    // Allow any keypress to skip, aligning with the visual copy instructions (fixes Coderabbit/Copilot)
+    const onKey    = () => skip();
 
     window.addEventListener('wheel',     onWheel,  { passive: true });
     window.addEventListener('touchmove', onTouch,  { passive: true });
     window.addEventListener('click',     onClick,  { passive: true });
-    window.addEventListener('keydown',   onKey);
+    window.addEventListener('keydown',   onKey,    { passive: true });
 
     return () => {
       window.removeEventListener('wheel',     onWheel);
@@ -188,8 +195,9 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
   return (
     <div
       id="ci-overlay"
-      aria-hidden="true"
-      className={`ci-overlay ${overlayDone ? 'ci-overlay--done' : ''}`}
+      role="dialog"
+      aria-label="Cinematic Intro Sequence"
+      className={`ci-overlay ${showWorldOpen ? 'ci-overlay--done' : ''}`}
     >
       {/* ── Scanline flicker — single decorative layer ──────────────────── */}
       <div className="ci-scanlines" />

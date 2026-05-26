@@ -295,6 +295,12 @@ body.ci-active {
   overflow: hidden;
   height: 100svh;
 }
+/* Disable mouse/focus interaction with hidden hero elements underneath overlay (fixes Coderabbit/Copilot) */
+body.ci-active .ci-hero-content,
+body.ci-active header {
+  pointer-events: none !important;
+  user-select: none !important;
+}
 
 /* ── Full-screen overlay ──────────────────────────────────── */
 .ci-overlay {
@@ -305,7 +311,7 @@ body.ci-active {
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
+  pointer-events: auto; /* consumes clicks so they don't leak underneath (fixes Coderabbit/Copilot) */
   transition: opacity 0.7s ease, visibility 0s linear 0.7s;
   opacity: 1;
   visibility: visible;
@@ -429,7 +435,7 @@ body.ci-active {
 }
 .ci-logo__slashes--visible {
   opacity: 1;
-  margin-left: 0.18em;
+  margin-left: 0.08em; /* tighter inline spacing for professional typography */
   max-width: 3ch;
   clip-path: inset(0 0 0 0);
   transform: translateY(0);
@@ -448,15 +454,15 @@ body.ci-active {
   filter: blur(8px);
   will-change: transform, opacity, filter, max-width, margin-left;
   transition:
-    opacity 0.9s cubic-bezier(0.25, 1, 0.5, 1),
-    filter 0.9s cubic-bezier(0.25, 1, 0.5, 1),
-    transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
-    max-width 0.9s cubic-bezier(0.16, 1, 0.3, 1),
-    margin-left 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    filter 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), /* snappier swoosh trigger */
+    max-width 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    margin-left 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ci-logo__soma--visible {
   opacity: 1;
-  margin-left: 0.20em;
+  margin-left: 0.08em; /* tighter inline spacing for professional typography */
   max-width: 6ch;
   transform: translateX(0) scale(1);
   filter: blur(0);
@@ -600,4 +606,40 @@ body.ci-done .ci-hero-content > *:nth-child(4) { transition-delay: 0.48s; }
   body.ci-active .ci-hero-content  { opacity: 1 !important; transform: none !important; }
   body.ci-active header nav,
   body.ci-active header > div:last-child { opacity: 1 !important; pointer-events: auto !important; }
+}
+
+/* ── Main Hero Animated Typography (Slide-up Mask) ─────────── */
+.ci-hero-line-1,
+.ci-hero-line-2 {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.ci-hero-word-slide {
+  transform: translateY(115%);
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: none;
+}
+body.ci-done .ci-hero-word-slide {
+  transform: translateY(0);
+  opacity: 1;
+  transition: 
+    transform 1.5s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+body.ci-done .ci-hero-word-slide--delay {
+  transition-delay: 0.35s; /* exact staggered delay for Line 2 */
+}
+
+/* "standardize" color bleed inside hero text */
+.ci-hero-standardize {
+  color: #ffffff;
+  transition: color 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s,
+              text-shadow 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s;
+}
+body.ci-done .ci-hero-standardize {
+  color: #FF5733;
+  text-shadow: 0 0 35px rgba(255, 87, 51, 0.55), 0 0 15px rgba(255, 87, 51, 0.20);
 }
