@@ -195,15 +195,18 @@ export default function AmbientBackground() {
       }
     };
 
+    // Update canvas rect on scroll for parallax accuracy
+    const handleScroll = () => {
+      canvasRectRef.current = canvas.getBoundingClientRect();
+    };
+
     // Set up canvas sizes and populate arrays
     resizeCanvas();
     initializeParticles();
 
     // Event listeners
     window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('scroll', () => {
-      canvasRectRef.current = canvas.getBoundingClientRect();
-    }, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseout', handleWindowMouseOut);
     window.addEventListener('blur', deactivateMouse);
@@ -335,6 +338,7 @@ export default function AmbientBackground() {
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseout', handleWindowMouseOut);
       window.removeEventListener('blur', deactivateMouse);
