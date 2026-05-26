@@ -10,6 +10,7 @@ export const apiEnvSchema = z.object({
   API_PORT: z.coerce.number().int().min(1).max(65535).default(8787),
   EVENTS_DIR: z.string().default('data/session-events'),
   RAMS_SHARED_SECRET: required,
+  GEMINI_API_KEY: z.string().min(1).optional(),
 });
 
 export const agentEnvSchema = z.object({
