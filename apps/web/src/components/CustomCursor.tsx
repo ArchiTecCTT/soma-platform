@@ -11,6 +11,7 @@ export default function CustomCursor() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [ripples, setRipples] = useState<Ripple[]>([]);
   const nextRippleId = useRef(0);
+  const rippleTimeoutIdsRef = useRef<number[]>([]);
 
   // Core coordinates refs for smooth lerping
   const coordsRef = useRef({
@@ -126,21 +127,22 @@ export default function CustomCursor() {
 
     // Click Visual States & Spawning Ripples
     const handlePointerDown = (e: PointerEvent) => {
-      const isRightClick = e.button === 2;
-      
-      // Spawn Ripple
-      const id = nextRippleId.current++;
-      setRipples((prev) => [...prev, { id, x: e.clientX, y: e.clientY, isRightClick }]);
-
-      // Left clicks toggle clicking cursor shape
-      if (!isRightClick) {
-        document.body.classList.add('cursor-clicking');
+      if (e.button === 2) {
+        return;
       }
 
+      // Spawn Ripple
+      const id = nextRippleId.current++;
+      setRipples((prev) => [...prev, { id, x: e.clientX, y: e.clientY, isRightClick: false }]);
+
+      // Left clicks toggle clicking cursor shape
+      document.body.classList.add('cursor-clicking');
+
       // Schedule cleanup for ripples after animation finishes
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
         setRipples((prev) => prev.filter((r) => r.id !== id));
       }, 800);
+      rippleTimeoutIdsRef.current.push(timeoutId);
     };
 
     const handlePointerUp = () => {
@@ -149,12 +151,21 @@ export default function CustomCursor() {
 
     // Right Click context menu override for customizable pulse visual
     const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        e.altKey ||
+        target?.closest('input, textarea, select, [contenteditable], [contenteditable=""], [contenteditable="true"]')
+      ) {
+        return;
+      }
+
       e.preventDefault();
       const id = nextRippleId.current++;
       setRipples((prev) => [...prev, { id, x: e.clientX, y: e.clientY, isRightClick: true }]);
-      setTimeout(() => {
+      const timeoutId = window.setTimeout(() => {
         setRipples((prev) => prev.filter((r) => r.id !== id));
       }, 800);
+      rippleTimeoutIdsRef.current.push(timeoutId);
     };
 
     // Initialize follower positions
@@ -162,6 +173,12 @@ export default function CustomCursor() {
     coordsRef.current.mouseY = window.innerHeight / 2;
     coordsRef.current.followerX = window.innerWidth / 2;
     coordsRef.current.followerY = window.innerHeight / 2;
+    if (dotRef.current) {
+      dotRef.current.style.transform = `translate(${coordsRef.current.mouseX}px, ${coordsRef.current.mouseY}px)`;
+    }
+    if (followerRef.current) {
+      followerRef.current.style.transform = `translate(${coordsRef.current.followerX}px, ${coordsRef.current.followerY}px)`;
+    }
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseover', handleMouseOver);
@@ -193,6 +210,13 @@ export default function CustomCursor() {
       window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('contextmenu', handleContextMenu);
       cancelAnimationFrame(animationFrameId);
+      rippleTimeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+      rippleTimeoutIdsRef.current = [];
+      document.body.classList.remove('cursor-hovering', 'cursor-clicking');
+      if (activeMagneticRef.current) {
+        activeMagneticRef.current.style.transform = 'translate3d(0, 0, 0)';
+        activeMagneticRef.current = null;
+      }
     };
   }, [prefersReducedMotion]);
 
@@ -205,8 +229,14 @@ export default function CustomCursor() {
     <>
       {/* Global CSS Injector to override system cursor */}
       <style>{`
-        *, *::before, *::after {
+        body, body * , body *::before, body *::after {
           cursor: none !important;
+        }
+        input, textarea, select, [contenteditable], [contenteditable=""], [contenteditable="true"] {
+          cursor: text !important;
+        }
+        button:disabled, [disabled], [aria-disabled='true'] {
+          cursor: not-allowed !important;
         }
         
         #cursor-dot, #cursor-follower {
