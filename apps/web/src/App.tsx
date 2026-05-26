@@ -3,8 +3,15 @@ import { GoogleGenAI } from '@google/genai';
 import { HISTORICAL_BEATS, RHETORICAL_CHOICE, COMPARISON_DATA, ROADMAP, DEFAULT_FLAWED_CODE } from './constants';
 import { ChatMessage, EventLog } from './types';
 
-// Initialize Google GenAI client (uses GEMINI_API_KEY env var automatically)
-const ai = new GoogleGenAI({});
+const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+function getAiClient() {
+  if (!geminiApiKey) {
+    return null;
+  }
+
+  return new GoogleGenAI({ apiKey: geminiApiKey });
+}
 
 export default function App() {
   // Loading Screen State
@@ -150,6 +157,11 @@ export default function App() {
         
         Keep your response concise (under 4 sentences), highly technical, and adversarial. Do not say "Great job!" or "Excellent!". Start directly with the critique.
       `;
+
+      const ai = getAiClient();
+      if (!ai) {
+        throw new Error('Missing VITE_GEMINI_API_KEY');
+      }
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
