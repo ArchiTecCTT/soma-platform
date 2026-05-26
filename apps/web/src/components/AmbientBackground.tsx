@@ -41,10 +41,12 @@ export default function AmbientBackground() {
       setPrefersReducedMotion(e.matches);
     };
 
+
     mediaQuery.addEventListener('change', handleQueryChange);
     return () => {
       mediaQuery.removeEventListener('change', handleQueryChange);
     };
+
   }, []);
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function AmbientBackground() {
           baseX: width * 0.25,
           baseY: height * 0.25,
           radius: Math.min(width, height) * 0.4,
-          color: 'rgba(255, 87, 51, 0.18)', // SOMA orange-red
+          color: 'rgba(255, 87, 51, 0.30)', // SOMA orange-red
           angle: 0,
           speed: 0.0012,
           driftRange: 80,
@@ -82,7 +84,7 @@ export default function AmbientBackground() {
           baseX: width * 0.75,
           baseY: height * 0.35,
           radius: Math.min(width, height) * 0.45,
-          color: 'rgba(0, 240, 255, 0.10)', // SOMA cyan
+          color: 'rgba(0, 240, 255, 0.22)', // SOMA cyan
           angle: Math.PI / 2,
           speed: 0.0008,
           driftRange: 100,
@@ -93,7 +95,7 @@ export default function AmbientBackground() {
           baseX: width * 0.4,
           baseY: height * 0.7,
           radius: Math.min(width, height) * 0.5,
-          color: 'rgba(99, 102, 241, 0.14)', // Deep Royal Purple
+          color: 'rgba(138, 100, 255, 0.28)', // Deep Royal Purple
           angle: Math.PI,
           speed: 0.0006,
           driftRange: 120,
@@ -104,13 +106,14 @@ export default function AmbientBackground() {
           baseX: width * 0.8,
           baseY: height * 0.8,
           radius: Math.min(width, height) * 0.35,
-          color: 'rgba(148, 163, 184, 0.08)', // Soft Slate Glow
+          color: 'rgba(148, 163, 184, 0.15)', // Soft Slate Glow
           angle: Math.PI * 1.5,
           speed: 0.001,
           driftRange: 60,
         }
       ];
     };
+
 
     // Initialize 55 particles
     const initializeParticles = () => {
@@ -121,19 +124,23 @@ export default function AmbientBackground() {
           y: Math.random() * height,
           vx: (Math.random() - 0.5) * 0.1,
           vy: - (Math.random() * 0.25 + 0.15), // Upward drift
-          radius: Math.random() * 1.8 + 0.6,
+          radius: Math.random() * 2.5 + 2.0,
           baseAlpha: baseAlpha,
           wobbleSpeed: Math.random() * 0.015 + 0.005,
           wobbleRange: Math.random() * 0.4 + 0.1,
           wobbleAngle: Math.random() * Math.PI * 2,
           parallaxFactor: Math.random() * 0.25 + 0.1, // Drifting layers
         };
+
       });
     };
+
 
     const renderStaticFrame = () => {
       ctx.fillStyle = '#030303';
       ctx.fillRect(0, 0, width, height);
+
+      drawBaseGlow();
 
       blobs.forEach((blob) => {
         const grad = ctx.createRadialGradient(blob.baseX, blob.baseY, 0, blob.baseX, blob.baseY, blob.radius);
@@ -146,11 +153,26 @@ export default function AmbientBackground() {
       });
 
       particles.forEach((p) => {
-        ctx.fillStyle = `rgba(226, 232, 240, ${p.baseAlpha * 0.7})`;
+        ctx.fillStyle = `rgba(226, 232, 240, ${p.baseAlpha * 0.9})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fill();
       });
+    };
+
+
+
+    // Warm base glow: always-present orange warmth under blobs
+    const drawBaseGlow = () => {
+      const cx = width * 0.45;
+      const cy = height * 0.45;
+      const r = Math.min(width, height) * 0.85;
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      glow.addColorStop(0, 'rgba(255, 87, 51, 0.18)');
+      glow.addColorStop(0.5, 'rgba(138, 100, 255, 0.09)');
+      glow.addColorStop(1, 'rgba(3, 3, 3, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, width, height);
     };
 
     // Handle high DPI display
@@ -173,6 +195,7 @@ export default function AmbientBackground() {
       }
     };
 
+
     // Track mouse position
     const handleMouseMove = (e: MouseEvent) => {
       const rect = canvasRectRef.current;
@@ -181,9 +204,11 @@ export default function AmbientBackground() {
       mouseRef.current.active = true;
     };
 
+
     const deactivateMouse = () => {
       mouseRef.current.active = false;
     };
+
 
     const handleWindowMouseOut = (e: MouseEvent) => {
       if (!e.relatedTarget) {
@@ -191,10 +216,12 @@ export default function AmbientBackground() {
       }
     };
 
+
     // Update canvas rect on scroll for parallax accuracy
     const handleScroll = () => {
       canvasRectRef.current = canvas.getBoundingClientRect();
     };
+
 
     // Set up canvas sizes and populate arrays
     resizeCanvas();
@@ -214,7 +241,9 @@ export default function AmbientBackground() {
         return;
       }
 
+
       ctx.clearRect(0, 0, width, height);
+      drawBaseGlow();
 
       // Lerp mouse positions for ultra-smooth responsiveness
       const mouse = mouseRef.current;
@@ -330,6 +359,7 @@ export default function AmbientBackground() {
       animationFrameId = requestAnimationFrame(animate);
     };
 
+
     animate();
 
     return () => {
@@ -340,6 +370,7 @@ export default function AmbientBackground() {
       window.removeEventListener('blur', deactivateMouse);
       cancelAnimationFrame(animationFrameId);
     };
+
   }, [prefersReducedMotion]);
 
   return (
