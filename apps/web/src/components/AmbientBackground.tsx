@@ -56,23 +56,10 @@ export default function AmbientBackground() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animationFrameId = 0;
     let width = 0;
     let height = 0;
-
-    // Handle high DPI display
-    const resizeCanvas = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      width = rect.width;
-      height = rect.height;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      ctx.scale(dpr, dpr);
-
-      // Reinitialize blobs to match new dimensions
-      initializeBlobs();
-    };
+    const canvasRectRef = { current: canvas.getBoundingClientRect() };
 
     // Keep track of blobs and particles
     let blobs: Blob[] = [];
@@ -127,7 +114,7 @@ export default function AmbientBackground() {
       ];
     };
 
-    // Initialize 50 particles
+    // Initialize 55 particles
     const initializeParticles = () => {
       particles = Array.from({ length: 55 }, () => {
         const baseAlpha = Math.random() * 0.35 + 0.1;
@@ -148,16 +135,64 @@ export default function AmbientBackground() {
       });
     };
 
+    const renderStaticFrame = () => {
+      ctx.fillStyle = '#030303';
+      ctx.fillRect(0, 0, width, height);
+
+      blobs.forEach((blob) => {
+        const grad = ctx.createRadialGradient(blob.baseX, blob.baseY, 0, blob.baseX, blob.baseY, blob.radius);
+        grad.addColorStop(0, blob.color);
+        grad.addColorStop(1, 'rgba(3, 3, 3, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(blob.baseX, blob.baseY, blob.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      particles.forEach((p) => {
+        ctx.fillStyle = `rgba(226, 232, 240, ${p.baseAlpha * 0.7})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    };
+
+    // Handle high DPI display
+    const resizeCanvas = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvasRectRef.current = rect;
+      width = rect.width;
+      height = rect.height;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+
+      // Reinitialize blobs to match new dimensions
+      initializeBlobs();
+
+      if (prefersReducedMotion) {
+        renderStaticFrame();
+      }
+    };
+
     // Track mouse position
     const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
+      const rect = canvasRectRef.current;
       mouseRef.current.targetX = e.clientX - rect.left;
       mouseRef.current.targetY = e.clientY - rect.top;
       mouseRef.current.active = true;
     };
 
-    const handleMouseLeave = () => {
+    const deactivateMouse = () => {
       mouseRef.current.active = false;
+    };
+
+    const handleWindowMouseOut = (e: MouseEvent) => {
+      if (!e.relatedTarget) {
+        deactivateMouse();
+      }
     };
 
     // Set up canvas sizes and populate arrays
@@ -166,34 +201,17 @@ export default function AmbientBackground() {
 
     // Event listeners
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('scroll', () => {
+      canvasRectRef.current = canvas.getBoundingClientRect();
+    }, { passive: true });
     window.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('mouseout', handleWindowMouseOut);
+    window.addEventListener('blur', deactivateMouse);
 
     // Animation Loop
     const animate = () => {
       if (prefersReducedMotion) {
-        // If reduced motion is preferred, render a single beautiful static snapshot and stop
-        ctx.fillStyle = '#030303';
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw static blobs
-        blobs.forEach((blob) => {
-          const grad = ctx.createRadialGradient(blob.baseX, blob.baseY, 0, blob.baseX, blob.baseY, blob.radius);
-          grad.addColorStop(0, blob.color);
-          grad.addColorStop(1, 'rgba(3, 3, 3, 0)');
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(blob.baseX, blob.baseY, blob.radius, 0, Math.PI * 2);
-          ctx.fill();
-        });
-
-        // Draw static particles
-        particles.forEach((p) => {
-          ctx.fillStyle = `rgba(226, 232, 240, ${p.baseAlpha * 0.7})`;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fill();
-        });
+        renderStaticFrame();
         return;
       }
 
@@ -318,7 +336,8 @@ export default function AmbientBackground() {
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       window.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('mouseout', handleWindowMouseOut);
+      window.removeEventListener('blur', deactivateMouse);
       cancelAnimationFrame(animationFrameId);
     };
   }, [prefersReducedMotion]);
