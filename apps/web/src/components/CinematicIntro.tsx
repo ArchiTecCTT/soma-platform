@@ -59,17 +59,30 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     logoEl.style.setProperty('--dock-y', `${nr.top  + nr.height / 2 - (lr.top  + lr.height / 2)}px`);
   }, [navWordmarkRef]);
 
-  // ── Skip handler — collapse everything to final state ────────────────────────
+  // ── Skip handler — fast-forward animations directly to the gated screen ─────
   const skip = useCallback(() => {
+    if (isComplete.current) return;
+    clearAllTimers();
+
+    setIntroState('indictment-4');
+    setStandardizeOrange(true);
+  }, [clearAllTimers]);
+
+  /** Trigger overlay fade-out and unmount when user clicks ENTER */
+  const handleEnter = useCallback(() => {
     if (isComplete.current) return;
     isComplete.current = true;
     clearAllTimers();
 
+    setIntroState('world-open');
     document.body.classList.remove('ci-active');
     document.body.classList.add('ci-done');
-    setIntroState('complete');
-    // Safe tracked unmount callback execution to prevent state updates on unmounted component
-    pushTimer(onComplete, 80);
+
+    // Wait for the 0.7s overlay fade-out to finish, then unmount overlay
+    pushTimer(() => {
+      setIntroState('complete');
+      onComplete();
+    }, 700);
   }, [clearAllTimers, onComplete, pushTimer]);
 
   // ── Main sequence ────────────────────────────────────────────────────────────
@@ -116,23 +129,8 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     // color bleed: standardize turns orange (Wait 500ms after Line 4 "Too well." is in -> 11700ms)
     pushTimer(() => setStandardizeOrange(true), dockEnd + 5200);
 
-    // world-open: cascade main page, unlock scroll, fade overlay (Wait 2.8s after bleed starts -> 14200ms)
-    // Toggles body classes here so hero section cascades and scroll unlocks during overlay 0.7s fade-out (fixes Coderabbit/Copilot)
-    pushTimer(() => {
-      setIntroState('world-open');
-      document.body.classList.remove('ci-active');
-      document.body.classList.add('ci-done');
-    }, dockEnd + 7700);
-
-    // complete: unmount overlay (Wait 1600ms after world-open starts -> 15800ms)
-    // Deferred until overlay has fully faded out to prevent visual cuts (fixes Sentry)
-    pushTimer(() => {
-      if (!isComplete.current) {
-        isComplete.current = true;
-        setIntroState('complete');
-        pushTimer(onComplete, 80);
-      }
-    }, dockEnd + 9300);
+    // color bleed: standardize turns orange (Wait 500ms after Line 4 "Too well." is in -> 11700ms)
+    pushTimer(() => setStandardizeOrange(true), dockEnd + 5200);
 
     // Clean up timers and restore scroll lock state if component unmounts prematurely (fixes Copilot)
     return () => {
@@ -268,10 +266,23 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
           <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0 ci-bold`}>Too</span></span>{' '}
           <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2 ci-bold`}>well.</span></span>
         </p>
+
+        {/* Post-intro gate: Enter button fades in slowly with a pulse below the indictment text */}
+        {showIndictment4 && (
+          <div className="pt-8 flex justify-center w-full z-20">
+            <button
+              id="hero-enter-btn"
+              className="hero-enter-btn"
+              onClick={handleEnter}
+            >
+              ENTER
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ── Skip hint ───────────────────────────────────────────────────── */}
-      <div className={`ci-skip ${atOrPast('indictment-1') && !showWorldOpen ? 'ci-skip--visible' : ''}`}>
+      {/* ── Skip hint — only visible until the ENTER button is ready ──────────────── */}
+      <div className={`ci-skip ${atOrPast('indictment-1') && !showIndictment4 && !showWorldOpen ? 'ci-skip--visible' : ''}`}>
         scroll, click or press any key to skip
       </div>
     </div>
