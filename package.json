@@ -2,6 +2,9 @@
   "name": "soma-platform",
   "private": true,
   "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "build": "pnpm -r build",
     "check": "pnpm -r check",
@@ -12,10 +15,10 @@
     "dev:agent": "pnpm --filter @soma/agent dev"
   },
   "devDependencies": {
-    "@types/node": "^22.15.18",
-    "concurrently": "^9.1.2",
-    "tsx": "^4.19.3",
-    "typescript": "^5.8.3",
-    "vitest": "^3.1.2"
+    "@types/node": "^25.9.1",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
   }
 }

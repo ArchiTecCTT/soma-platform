@@ -10,14 +10,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@livekit/agents": "^1.0.18",
-    "@livekit/agents-plugin-openai": "^1.0.18",
+    "@livekit/agents": "^1.4.4",
+    "@livekit/agents-plugin-openai": "^1.4.4",
     "@soma/shared": "workspace:*",
-    "dotenv": "^16.5.0",
-    "zod": "^3.24.4"
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "typescript": "^5.8.2",
-    "vitest": "^3.0.7"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
   }
 }

@@ -4,6 +4,9 @@
     "jsx": "react-jsx",
     "outDir": "dist",
     "baseUrl": ".",
+    // Suppress TS 6.0 warning for baseUrl (used for path aliases)
+    // Can be removed once path aliases are migrated to use explicit relative paths
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": ["./src/*"],
       "@/components/*": ["./src/components/*"],
@@ -12,5 +15,5 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
-  "exclude": ["src/livekit", "src/sandbox"]
+  "exclude": ["src/sandbox"]
 }
