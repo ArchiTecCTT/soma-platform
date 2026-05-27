@@ -34,6 +34,24 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
   const isComplete   = useRef(false);
   const timers       = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // ── Derived booleans ─────────────────────────────────────────────────────────
+  const states: IntroState[] = [
+    'pre-reveal', 'reveal', 'slashes-reveal', 'soma-reveal', 'dock',
+    'indictment-1', 'indictment-2', 'indictment-3', 'indictment-4',
+    'world-open', 'complete',
+  ];
+  const stateIdx = states.indexOf(introState);
+
+  const atOrPast = (s: IntroState) => stateIdx >= states.indexOf(s);
+
+  const isDocked         = atOrPast('dock');
+  const showIndictment1  = atOrPast('indictment-1');
+  const showIndictment2  = atOrPast('indictment-2');
+  const showIndictment3  = atOrPast('indictment-3');
+  const showIndictment4  = atOrPast('indictment-4');
+  const showWorldOpen    = atOrPast('world-open');
+  const overlayDone      = atOrPast('complete');
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   const pushTimer = useCallback((fn: () => void, ms: number) => {
@@ -59,17 +77,30 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     logoEl.style.setProperty('--dock-y', `${nr.top  + nr.height / 2 - (lr.top  + lr.height / 2)}px`);
   }, [navWordmarkRef]);
 
-  // ── Skip handler — collapse everything to final state ────────────────────────
+  // ── Skip handler — fast-forward animations directly to the gated screen ─────
   const skip = useCallback(() => {
+    if (isComplete.current) return;
+    clearAllTimers();
+
+    setIntroState('indictment-4');
+    setStandardizeOrange(true);
+  }, [clearAllTimers]);
+
+  /** Trigger overlay fade-out and unmount when user clicks ENTER */
+  const handleEnter = useCallback(() => {
     if (isComplete.current) return;
     isComplete.current = true;
     clearAllTimers();
 
+    setIntroState('world-open');
     document.body.classList.remove('ci-active');
     document.body.classList.add('ci-done');
-    setIntroState('complete');
-    // Safe tracked unmount callback execution to prevent state updates on unmounted component
-    pushTimer(onComplete, 80);
+
+    // Wait for the 0.7s overlay fade-out to finish, then unmount overlay
+    pushTimer(() => {
+      setIntroState('complete');
+      onComplete();
+    }, 700);
   }, [clearAllTimers, onComplete, pushTimer]);
 
   // ── Main sequence ────────────────────────────────────────────────────────────
@@ -116,24 +147,6 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     // color bleed: standardize turns orange (Wait 500ms after Line 4 "Too well." is in -> 11700ms)
     pushTimer(() => setStandardizeOrange(true), dockEnd + 5200);
 
-    // world-open: cascade main page, unlock scroll, fade overlay (Wait 2.8s after bleed starts -> 14200ms)
-    // Toggles body classes here so hero section cascades and scroll unlocks during overlay 0.7s fade-out (fixes Coderabbit/Copilot)
-    pushTimer(() => {
-      setIntroState('world-open');
-      document.body.classList.remove('ci-active');
-      document.body.classList.add('ci-done');
-    }, dockEnd + 7700);
-
-    // complete: unmount overlay (Wait 1600ms after world-open starts -> 15800ms)
-    // Deferred until overlay has fully faded out to prevent visual cuts (fixes Sentry)
-    pushTimer(() => {
-      if (!isComplete.current) {
-        isComplete.current = true;
-        setIntroState('complete');
-        pushTimer(onComplete, 80);
-      }
-    }, dockEnd + 9300);
-
     // Clean up timers and restore scroll lock state if component unmounts prematurely (fixes Copilot)
     return () => {
       clearAllTimers();
@@ -143,6 +156,9 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
 
   // ── Skip on scroll / touch / click / key ─────────────────────────────────────
   useEffect(() => {
+    // Only capture skip gestures while the intro animations are running (before indictment-4 / gated state is reached)
+    if (showIndictment4) return;
+
     const onWheel  = () => skip();
     const onTouch  = () => skip();
     const onClick  = () => skip();
@@ -160,7 +176,7 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
       window.removeEventListener('click',     onClick);
       window.removeEventListener('keydown',   onKey);
     };
-  }, [skip]);
+  }, [skip, showIndictment4]);
 
   // ── Realign dock target on window resize ────────────────────────────────────
   useEffect(() => {
@@ -173,23 +189,6 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); };
   }, [measureDockTarget]);
 
-  // ── Derived booleans ─────────────────────────────────────────────────────────
-  const states: IntroState[] = [
-    'pre-reveal', 'reveal', 'slashes-reveal', 'soma-reveal', 'dock',
-    'indictment-1', 'indictment-2', 'indictment-3', 'indictment-4',
-    'world-open', 'complete',
-  ];
-  const stateIdx = states.indexOf(introState);
-
-  const atOrPast = (s: IntroState) => stateIdx >= states.indexOf(s);
-
-  const isDocked         = atOrPast('dock');
-  const showIndictment1  = atOrPast('indictment-1');
-  const showIndictment2  = atOrPast('indictment-2');
-  const showIndictment3  = atOrPast('indictment-3');
-  const showIndictment4  = atOrPast('indictment-4');
-  const showWorldOpen    = atOrPast('world-open');
-  const overlayDone      = atOrPast('complete');
 
   if (introState === 'complete') return null;
 
@@ -236,19 +235,20 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
       >
         {/* Line 1 */}
         <p className="ci-line ci-line--1">
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>We</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-1`}>built</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>a</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-3`}>system</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-4`}>to</span></span>
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>We</span></span>{' '}
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-1`}>built</span></span>{' '}
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>a</span></span>{' '}
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-3`}>system</span></span>{' '}
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-4`}>to</span></span>
         </p>
 
         {/* Line 2 — standardize colour-bleeds after delay */}
         <p className="ci-line ci-line--2">
-          <span className="inline-block overflow-hidden">
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}>
             <span
               className={[
                 'ci-indictment-word',
+                'interactive',
                 showIndictment2 ? 'ci-indictment-word--in' : '',
                 'ci-indictment-word--delay-0',
                 'ci-standardize',
@@ -258,20 +258,33 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
               standardize
             </span>
           </span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment2 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>minds.</span></span>
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment2 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>minds.</span></span>
         </p>
 
         {/* Line 3 */}
         <p className="ci-line ci-line--3">
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>It</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>worked.</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0 ci-bold`}>Too</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2 ci-bold`}>well.</span></span>
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>It</span></span>{' '}
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>worked.</span></span>{' '}
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0 ci-bold`}>Too</span></span>{' '}
+          <span className={`ci-word-crop ${showIndictment4 ? '' : 'overflow-hidden'}`}><span className={`ci-indictment-word interactive ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2 ci-bold`}>well.</span></span>
         </p>
+
+        {/* Post-intro gate: Enter button is always in the DOM to prevent vertical layout centering shifts */}
+        <div className="pt-8 flex justify-center w-full z-20">
+          <button
+            id="hero-enter-btn"
+            className={`hero-enter-btn ${showIndictment4 ? 'hero-enter-btn--active' : ''}`}
+            onClick={showIndictment4 ? handleEnter : undefined}
+            disabled={!showIndictment4}
+            aria-disabled={!showIndictment4}
+          >
+            UNDERSTAND ITS UTILITY
+          </button>
+        </div>
       </div>
 
-      {/* ── Skip hint ───────────────────────────────────────────────────── */}
-      <div className={`ci-skip ${atOrPast('indictment-1') && !showWorldOpen ? 'ci-skip--visible' : ''}`}>
+      {/* ── Skip hint — only visible until the ENTER button is ready ──────────────── */}
+      <div className={`ci-skip ${atOrPast('indictment-1') && !showIndictment4 && !showWorldOpen ? 'ci-skip--visible' : ''}`}>
         scroll, click or press any key to skip
       </div>
     </div>

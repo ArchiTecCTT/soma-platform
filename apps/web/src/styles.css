@@ -316,6 +316,39 @@ body.ci-active header {
   opacity: 1;
   visibility: visible;
 }
+/* Subtle grid background that perfectly matches the hero's grid pattern, opacity, and radial mask with breathing animation */
+.ci-overlay::before,
+.ci-isometric-pattern {
+  content: "";
+  position: absolute;
+  inset: 0;
+  --s: 200px; /* control the size */
+  --c1: #1d1d1d;
+  --c2: #4e4f51;
+  --c3: #3c3c3c;
+
+  background: repeating-conic-gradient(
+        from 30deg,
+        #0000 0 120deg,
+        var(--c3) 0 180deg
+      )
+      calc(0.5 * var(--s)) calc(0.5 * var(--s) * 0.577),
+    repeating-conic-gradient(
+      from 30deg,
+      var(--c1) 0 60deg,
+      var(--c2) 0 120deg,
+      var(--c3) 0 180deg
+    );
+  background-size: var(--s) calc(var(--s) * 0.577);
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 0;
+  animation: ci-grid-breath 12s ease-in-out infinite;
+  transform: translate3d(0, 0, 0);
+  will-change: opacity;
+}
 .ci-overlay--done {
   opacity: 0;
   visibility: hidden;
@@ -425,8 +458,8 @@ body.ci-active header {
 }
 .ci-logo__slashes--visible {
   opacity: 1;
-  margin-left: 0.08em; /* tighter inline spacing for professional typography */
-  max-width: 2ch;
+  margin-left: 0.28em; /* balanced inline spacing matching a space character */
+  max-width: 2.5ch;    /* expanded to prevent italic/tilted slash tip truncation */
   clip-path: inset(0 0 0 0);
   transform: translateY(0);
   overflow: visible;
@@ -452,8 +485,8 @@ body.ci-active header {
 }
 .ci-logo__soma--visible {
   opacity: 1;
-  margin-left: 0.08em; /* tighter inline spacing for professional typography */
-  max-width: 4ch;
+  margin-left: 0.28em; /* balanced inline spacing matching a space character */
+  max-width: 4.5ch;    /* expanded to prevent potential letter tip truncation */
   transform: translateX(0) scale(1);
   filter: blur(0);
   overflow: visible;
@@ -470,7 +503,7 @@ body.ci-active header {
   gap: clamp(0.5rem, 1.5vw, 1.1rem);
   z-index: 10;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto; /* changed to auto to support active children pointers */
   transition: opacity 0.5s ease;
 }
 .ci-indictment--visible {
@@ -493,6 +526,11 @@ body.ci-active header {
   text-align: center;
 }
 
+.ci-word-crop {
+  display: inline-block;
+  vertical-align: bottom;
+}
+
 /* ── Indictment Staggered Word Slide-up ────────────────── */
 .ci-indictment-word {
   display: inline-block;
@@ -503,15 +541,27 @@ body.ci-active header {
   -webkit-backface-visibility: hidden;
   transform-style: preserve-3d;
   filter: blur(4px); /* subtle entry blur for premium feel */
+  cursor: none;
   transition: 
     transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    filter 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.3s ease,
+    text-shadow 0.3s ease;
 }
 .ci-indictment-word--in {
   transform: translateY(0);
   opacity: 1;
   filter: blur(0);
+}
+.ci-indictment-word:hover {
+  color: #FF5733;
+  text-shadow: 0 0 15px rgba(255, 87, 51, 0.45);
+  transform: scale(1.08) translateY(-3px);
+  transition: 
+    transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    color 0.3s ease,
+    text-shadow 0.3s ease;
 }
 
 /* Precise Stagger Delays within a line */
@@ -531,13 +581,14 @@ body.ci-active header {
   font-weight: 700;
 }
 
-/* ── "standardize" colour bleed — slow gradual turn ───────── */
 .ci-standardize {
   /* NOTE: display is inherited from parent ci-indictment-word (inline-block) */
   /* do NOT set display:inline here — it breaks the slide-up transform */
   font-family: 'JetBrains Mono', monospace;
   font-weight: 400;
   color: #ffffff;
+  position: relative;
+  top: 0.02em; /* shift baseline slightly downwards to match Bricolage Grotesque alignment */
   transition: 
     transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
@@ -632,6 +683,7 @@ body.ci-done .ci-hero-content > *:nth-child(4) { transition-delay: 0.48s; }
   -webkit-backface-visibility: hidden;
   transform-style: preserve-3d;
   filter: blur(0px); /* forces sub-pixel anti-aliasing rendering in Chrome/Firefox */
+  cursor: none;
   transition: none;
 }
 body.ci-done .ci-hero-word {
@@ -640,7 +692,18 @@ body.ci-done .ci-hero-word {
   filter: blur(0px);
   transition: 
     transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.3s ease,
+    text-shadow 0.3s ease;
+}
+body.ci-done .ci-hero-word:hover {
+  color: #FF5733;
+  text-shadow: 0 0 15px rgba(255, 87, 51, 0.45);
+  transform: scale(1.08) translateY(-3px);
+  transition: 
+    transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    color 0.3s ease,
+    text-shadow 0.3s ease;
 }
 
 /* Precise Stagger Delays for each word */
@@ -659,10 +722,127 @@ body.ci-done .ci-hero-word--delay-10 { transition-delay: 0.56s; }
 /* "standardize" color bleed inside hero text */
 .ci-hero-standardize {
   color: #ffffff;
+  position: relative;
+  top: 0.02em; /* shift baseline slightly downwards to match Bricolage Grotesque alignment */
   transition: color 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s,
               text-shadow 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s;
 }
 body.ci-done .ci-hero-standardize {
   color: #FF5733;
   text-shadow: 0 0 35px rgba(255, 87, 51, 0.55), 0 0 15px rgba(255, 87, 51, 0.20);
+}
+
+/* ============================================================
+   HERO ENTER BUTTON — Post-intro gate
+   Fades in slowly after the intro completes, with a subtle
+   breathing pulse to invite interaction.
+   ============================================================ */
+
+@keyframes hero-enter-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-enter-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(255, 87, 51, 0),
+      0 0 18px rgba(255, 87, 51, 0.12);
+    border-color: rgba(255, 87, 51, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(255, 87, 51, 0),
+      0 0 32px rgba(255, 87, 51, 0.28);
+    border-color: rgba(255, 87, 51, 0.70);
+  }
+}
+
+.hero-enter-btn {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 3.5rem;
+  border-radius: 2px;
+
+  /* Typography */
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #ffffff;
+
+  /* Surface */
+  background: transparent;
+  border: 1px solid rgba(255, 87, 51, 0.35);
+  box-shadow: none;
+  outline: none;
+
+  /* Cursor */
+  cursor: pointer;
+
+  /* Fade-in: starts invisible, slowly appears after 0.6s delay once active */
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none; /* disabled by default to prevent pre-intro clicks */
+
+  transition: all 0.3s ease 0s;
+}
+
+/* Keyboard focus visibility for accessibility */
+.hero-enter-btn:focus-visible {
+  outline: 2px solid #00F0FF;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.2);
+}
+
+/* Trigger animation and enable clicks when the active class is added */
+.hero-enter-btn--active {
+  pointer-events: auto;
+  animation: hero-enter-fade-in 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards,
+             hero-enter-pulse 2s ease-in-out 2.8s infinite;
+}
+
+.hero-enter-btn:hover {
+  background-color: #FF5733;
+  color: #ffffff;
+  border-color: #FF5733;
+  box-shadow: 0px 15px 20px rgba(255, 87, 51, 0.4);
+  transform: translateY(-7px);
+}
+
+.hero-enter-btn:active {
+  transform: translateY(-1px);
+}
+
+/* Reduced motion: appear instantly */
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter-btn {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Breathing Background Grid ── */
+.ci-hero-grid-breath {
+  animation: ci-grid-breath 12s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@keyframes ci-grid-breath {
+  0%, 100% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
