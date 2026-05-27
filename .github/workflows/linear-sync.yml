@@ -22,25 +22,38 @@ jobs:
   sync-linear:
     name: linear-sync
     runs-on: ubuntu-latest
+    # Restrict permissions - only Linear API calls needed
+    permissions: {}
     steps:
       - name: Extract Linear Issue ID
         id: extract
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref || '' }}
+          DISPATCH_ISSUE_ID: ${{ inputs.issue_id || '' }}
         run: |
-          if [ -n "${{ github.event.pull_request.title }}" ]; then
-            # Extract from PR title (e.g., "feat: Add voice (ALL-123)")
-            ISSUE=$(echo "${{ github.event.pull_request.title }}" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+          ISSUE=""
+
+          # Extract from PR title (e.g., "feat: Add voice (ALL-123)")
+          if [ -z "$ISSUE" ] && [ -n "$PR_TITLE" ]; then
+            ISSUE=$(printf '%s' "$PR_TITLE" | grep -oE '[A-Z]+-[0-9]+' | head -1)
           fi
-          
-          if [ -z "$ISSUE" ] && [ -n "${{ github.event.pull_request.head.ref }}" ]; then
-            # Extract from branch name (e.g., feature/ALL-123-add-voice)
-            ISSUE=$(echo "${{ github.event.pull_request.head.ref }}" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+
+          # Extract from branch name (e.g., feature/ALL-123-add-voice)
+          if [ -z "$ISSUE" ] && [ -n "$PR_BRANCH" ]; then
+            ISSUE=$(printf '%s' "$PR_BRANCH" | grep -oE '[A-Z]+-[0-9]+' | head -1)
           fi
-          
-          # Manual trigger override
-          if [ -n "${{ inputs.issue_id }}" ]; then
-            ISSUE="${{ inputs.issue_id }}"
+
+          # Manual trigger override with validation
+          if [ -z "$ISSUE" ] && [ -n "$DISPATCH_ISSUE_ID" ]; then
+            if printf '%s' "$DISPATCH_ISSUE_ID" | grep -qE '^[A-Z]+-[0-9]+$'; then
+              ISSUE="$DISPATCH_ISSUE_ID"
+            else
+              echo "::error::Invalid issue_id format: $DISPATCH_ISSUE_ID"
+              exit 1
+            fi
           fi
-          
+
           if [ -z "$ISSUE" ]; then
             echo "No Linear issue found in PR title or branch name - check passes"
             echo "issue_id=" >> $GITHUB_OUTPUT
@@ -52,20 +65,28 @@ jobs:
       - name: Get Issue UUID from Linear
         if: steps.extract.outputs.issue_id != ''
         id: get-issue
+        env:
+          ISSUE_ID: ${{ steps.extract.outputs.issue_id }}
         run: |
+          PAYLOAD=$(jq -n --arg q "$ISSUE_ID" '{
+            query: "query ($q: String!) { issueSearch(query: $q, first: 1) { nodes { id identifier state { name type } } } }",
+            variables: { q: $q }
+          }')
+
           RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.LINEAR_API_KEY }}" \
-            -d "{\"query\": \"query { issueSearch(query: \\\"${{ steps.extract.outputs.issue_id }}\\\", first: 1) { nodes { id identifier state { name type } } } }\"}")
-          
-          ISSUE_UUID=$(echo "$RESPONSE" | jq -r '.data.issueSearch.nodes[0].id')
-          STATE_TYPE=$(echo "$RESPONSE" | jq -r '.data.issueSearch.nodes[0].state.type')
-          
-          if [ "$ISSUE_UUID" == "null" ]; then
-            echo "Could not find issue ${{ steps.extract.outputs.issue_id }}"
+            -d "$PAYLOAD")
+
+          if [ "$(echo "$RESPONSE" | jq -r '.data.issueSearch.nodes[0].id // "null"')" == "null" ]; then
+            echo "::error::Could not find issue: $ISSUE_ID"
+            echo "::error::Response: $(echo "$RESPONSE" | jq -c '.errors // .data')"
             exit 1
           fi
-          
+
+          ISSUE_UUID=$(echo "$RESPONSE" | jq -r '.data.issueSearch.nodes[0].id')
+          STATE_TYPE=$(echo "$RESPONSE" | jq -r '.data.issueSearch.nodes[0].state.type')
+
           echo "Issue UUID: $ISSUE_UUID"
           echo "Current state: $STATE_TYPE"
           echo "issue_uuid=$ISSUE_UUID" >> $GITHUB_OUTPUT
@@ -74,21 +95,31 @@ jobs:
       - name: Get workflow states
         if: steps.extract.outputs.issue_id != ''
         id: get-states
+        env:
+          PR_ACTION: ${{ github.event.action }}
+          PR_MERGED: ${{ github.event.pull_request.merged || false }}
+          DISPATCH_ACTION: ${{ inputs.action || '' }}
         run: |
           RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.LINEAR_API_KEY }}" \
             -d '{"query": "query { workflowStates { nodes { id name type } } }"}')
-          
-          # Get target state based on action
-          ACTION="${{ github.event.action }}"
-          if [ -n "${{ inputs.action }}" ]; then
-            ACTION="${{ inputs.action }}"
+
+          # Determine action (prefer dispatch input, fall back to PR event)
+          ACTION="$DISPATCH_ACTION"
+          if [ -z "$ACTION" ]; then
+            ACTION="$PR_ACTION"
           fi
-          
+
+          # Map action to state type
           case "$ACTION" in
             closed)
-              TARGET_TYPE="completed"
+              # Check merged flag for closed PRs
+              if [ "$PR_MERGED" = "true" ]; then
+                TARGET_TYPE="completed"
+              else
+                TARGET_TYPE="canceled"
+              fi
               ;;
             cancel|canceled)
               TARGET_TYPE="canceled"
@@ -103,32 +134,46 @@ jobs:
               TARGET_TYPE="started"
               ;;
             *)
-              # For PRs, closed means completed
-              if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
-                TARGET_TYPE="completed"
-              else
-                TARGET_TYPE="canceled"
-              fi
+              TARGET_TYPE="canceled"
               ;;
           esac
-          
+
           TARGET_STATE=$(echo "$RESPONSE" | jq -r ".data.workflowStates.nodes[] | select(.type == \"$TARGET_TYPE\") | .id" | head -1)
-          
+
           echo "Target state type: $TARGET_TYPE"
           echo "Target state UUID: $TARGET_STATE"
           echo "target_state=$TARGET_STATE" >> $GITHUB_OUTPUT
 
       - name: Update Linear Issue
         if: steps.extract.outputs.issue_id != ''
+        env:
+          ISSUE_UUID: ${{ steps.get-issue.outputs.issue_uuid }}
+          TARGET_STATE: ${{ steps.get-states.outputs.target_state }}
+          ISSUE_ID: ${{ steps.extract.outputs.issue_id }}
         run: |
-          if [ -z "${{ steps.get-states.outputs.target_state }}" ]; then
+          if [ -z "$TARGET_STATE" ]; then
             echo "No target state found, skipping update"
             exit 0
           fi
-          
-          curl -s -X POST https://api.linear.app/graphql \
+
+          PAYLOAD=$(jq -n \
+            --arg i "$ISSUE_UUID" \
+            --arg s "$TARGET_STATE" \
+            '{
+              query: "mutation ($i: ID!, $s: ID!) { issueUpdate(id: $i, input: { stateId: $s }) { success issue { identifier state { name } } } }",
+              variables: { i: $i, s: $s }
+            }')
+
+          RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.LINEAR_API_KEY }}" \
-            -d "{\"query\": \"mutation { issueUpdate(id: \\\"${{ steps.get-issue.outputs.issue_uuid }}\\\", input: { stateId: \\\"${{ steps.get-states.outputs.target_state }}\\\" }) { success issue { identifier state { name } } } }\"}" | jq '.data.issueUpdate'
-          
-          echo "::notice::Updated Linear issue ${{ steps.extract.outputs.issue_id }} to ${{ github.event.action }}"
+            -d "$PAYLOAD")
+
+          # Validate response before announcing success
+          if [ "$(echo "$RESPONSE" | jq -r '.data.issueUpdate.success // false')" != "true" ]; then
+            echo "::error::Linear update failed"
+            echo "::error::Response: $(echo "$RESPONSE" | jq -c '.errors // .data.issueUpdate')"
+            exit 1
+          fi
+
+          echo "::notice::Updated Linear issue $ISSUE_ID"

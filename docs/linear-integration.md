@@ -36,12 +36,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check PR title for Linear issue
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref || '' }}
         run: |
-          TITLE="${{ github.event.pull_request.title }}"
-          BRANCH="${{ github.event.pull_request.head.ref }}"
-          
-          ISSUE=$(echo "$TITLE $BRANCH" | grep -oE 'ALL-[0-9]+' | head -1)
-          
+          ISSUE=$(printf '%s %s' "$PR_TITLE" "$PR_BRANCH" | grep -oE 'ALL-[0-9]+' | head -1)
+
           if [ -z "$ISSUE" ]; then
             echo "::error::No Linear issue found. Include issue ID in PR title or branch name."
             echo "Examples:"
@@ -49,7 +49,7 @@ jobs:
             echo "  - Branch: 'feature/ALL-123-add-voice'"
             exit 1
           fi
-          
+
           echo "Found issue: $ISSUE"
 ```
 
@@ -97,7 +97,7 @@ jobs:
    - Method: `POST`
    - Headers:
      ```
-     Content-Type: application application/json
+     Content-Type: application/json
      Authorization: Bearer YOUR_LINEAR_API_KEY
      ```
    - Body:
