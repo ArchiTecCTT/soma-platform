@@ -2,7 +2,7 @@ name: Linear Issue Sync
 
 on:
   pull_request:
-    types: [closed, review_requested]
+    types: [opened, synchronize, reopened, closed, review_requested]
   workflow_dispatch:
     inputs:
       issue_id:
@@ -20,6 +20,7 @@ on:
 
 jobs:
   sync-linear:
+    name: linear-sync
     runs-on: ubuntu-latest
     steps:
       - name: Extract Linear Issue ID
@@ -41,13 +42,12 @@ jobs:
           fi
           
           if [ -z "$ISSUE" ]; then
-            echo "No Linear issue found in PR title or branch name"
+            echo "No Linear issue found in PR title or branch name - check passes"
             echo "issue_id=" >> $GITHUB_OUTPUT
-            exit 0
+          else
+            echo "Found Linear issue: $ISSUE"
+            echo "issue_id=$ISSUE" >> $GITHUB_OUTPUT
           fi
-          
-          echo "Found Linear issue: $ISSUE"
-          echo "issue_id=$ISSUE" >> $GITHUB_OUTPUT
 
       - name: Get Issue UUID from Linear
         if: steps.extract.outputs.issue_id != ''
