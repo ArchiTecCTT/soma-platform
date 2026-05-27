@@ -8,7 +8,7 @@ const mockSetMicrophoneEnabled = vi.fn();
 
 vi.mock('livekit-client', () => {
   return {
-    Room: vi.fn().mockImplementation(() => {
+    Room: vi.fn().mockImplementation(function () {
       return {
         connect: mockConnect,
         disconnect: mockDisconnect,
