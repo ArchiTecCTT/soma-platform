@@ -316,6 +316,21 @@ body.ci-active header {
   opacity: 1;
   visibility: visible;
 }
+/* Subtle grid background that perfectly matches the hero's grid pattern, opacity, and radial mask */
+.ci-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right,  #1a1a1a 1px, transparent 1px),
+    linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
 .ci-overlay--done {
   opacity: 0;
   visibility: hidden;
@@ -665,4 +680,84 @@ body.ci-done .ci-hero-word--delay-10 { transition-delay: 0.56s; }
 body.ci-done .ci-hero-standardize {
   color: #FF5733;
   text-shadow: 0 0 35px rgba(255, 87, 51, 0.55), 0 0 15px rgba(255, 87, 51, 0.20);
+}
+
+/* ============================================================
+   HERO ENTER BUTTON — Post-intro gate
+   Fades in slowly after the intro completes, with a subtle
+   breathing pulse to invite interaction.
+   ============================================================ */
+
+@keyframes heroEnterFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroEnterPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(255, 87, 51, 0),
+      0 0 18px rgba(255, 87, 51, 0.12);
+    border-color: rgba(255, 87, 51, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(255, 87, 51, 0),
+      0 0 32px rgba(255, 87, 51, 0.28);
+    border-color: rgba(255, 87, 51, 0.70);
+  }
+}
+
+.hero-enter-btn {
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 3.5rem;
+  border-radius: 2px;
+
+  /* Typography */
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #ffffff;
+
+  /* Surface */
+  background: transparent;
+  border: 1px solid rgba(255, 87, 51, 0.35);
+
+  /* Cursor */
+  cursor: pointer;
+
+  /* Fade-in: starts invisible, slowly appears after 0.6s delay once mounted */
+  opacity: 0;
+  transform: translateY(10px);
+  animation:
+    heroEnterFadeIn 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards,
+    heroEnterPulse  3.0s ease-in-out 2.8s infinite;
+
+  /* Hover */
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.hero-enter-btn:hover {
+  background: rgba(255, 87, 51, 0.08);
+  color: #FF5733;
+}
+
+/* Reduced motion: appear instantly, no pulse */
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter-btn {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    border-color: rgba(255, 87, 51, 0.50);
+  }
 }
