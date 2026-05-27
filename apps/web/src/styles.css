@@ -440,8 +440,8 @@ body.ci-active header {
 }
 .ci-logo__slashes--visible {
   opacity: 1;
-  margin-left: 0.08em; /* tighter inline spacing for professional typography */
-  max-width: 2ch;
+  margin-left: 0.28em; /* balanced inline spacing matching a space character */
+  max-width: 2.5ch;    /* expanded to prevent italic/tilted slash tip truncation */
   clip-path: inset(0 0 0 0);
   transform: translateY(0);
   overflow: visible;
@@ -467,8 +467,8 @@ body.ci-active header {
 }
 .ci-logo__soma--visible {
   opacity: 1;
-  margin-left: 0.08em; /* tighter inline spacing for professional typography */
-  max-width: 4ch;
+  margin-left: 0.28em; /* balanced inline spacing matching a space character */
+  max-width: 4.5ch;    /* expanded to prevent potential letter tip truncation */
   transform: translateX(0) scale(1);
   filter: blur(0);
   overflow: visible;
