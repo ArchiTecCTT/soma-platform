@@ -295,11 +295,13 @@ export default function App() {
 
         {/* SECTION 1: Hook (Immersive Storytelling) */}
         <section id="narrative" className="relative min-h-[95vh] flex flex-col justify-center items-center px-6 text-center overflow-hidden border-b border-brand-gray">
-          {/* Subtle background grid with parallax effect */}
+          {/* Subtle background grid with nested parallax and breathing layers */}
           <div
             style={{ transform: `translateY(${scrollY * 0.15}px)` }}
-            className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 pointer-events-none ci-hero-grid-breath"
-          ></div>
+            className="absolute inset-0 pointer-events-none"
+          >
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 ci-hero-grid-breath"></div>
+          </div>
 
           <div className="ci-hero-content max-w-4xl mx-auto z-10 space-y-10">
             {/* Hero Title */}
