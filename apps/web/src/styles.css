@@ -738,7 +738,7 @@ body.ci-done .ci-hero-standardize {
    breathing pulse to invite interaction.
    ============================================================ */
 
-@keyframes heroEnterFadeIn {
+@keyframes hero-enter-fade-in {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -749,7 +749,7 @@ body.ci-done .ci-hero-standardize {
   }
 }
 
-@keyframes heroEnterPulse {
+@keyframes hero-enter-pulse {
   0%, 100% {
     box-shadow:
       0 0 0 0 rgba(255, 87, 51, 0),
@@ -797,10 +797,17 @@ body.ci-done .ci-hero-standardize {
   transition: all 0.3s ease 0s;
 }
 
+/* Keyboard focus visibility for accessibility */
+.hero-enter-btn:focus-visible {
+  outline: 2px solid #00F0FF;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.2);
+}
+
 /* Trigger animation and enable clicks when the active class is added */
 .hero-enter-btn--active {
   pointer-events: auto;
-  animation: heroEnterFadeIn 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+  animation: hero-enter-fade-in 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
 }
 
 .hero-enter-btn:hover {

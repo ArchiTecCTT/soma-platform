@@ -252,7 +252,7 @@ export default function App() {
         <CinematicIntro
           onComplete={() => {
             setIntroVisible(false);
-            setIsGated(true);
+            setIsGated(false);
           }}
           navWordmarkRef={navWordmarkRef}
         />

@@ -147,9 +147,6 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     // color bleed: standardize turns orange (Wait 500ms after Line 4 "Too well." is in -> 11700ms)
     pushTimer(() => setStandardizeOrange(true), dockEnd + 5200);
 
-    // color bleed: standardize turns orange (Wait 500ms after Line 4 "Too well." is in -> 11700ms)
-    pushTimer(() => setStandardizeOrange(true), dockEnd + 5200);
-
     // Clean up timers and restore scroll lock state if component unmounts prematurely (fixes Copilot)
     return () => {
       clearAllTimers();
