@@ -317,17 +317,32 @@ body.ci-active header {
   visibility: visible;
 }
 /* Subtle grid background that perfectly matches the hero's grid pattern, opacity, and radial mask with breathing animation */
-.ci-overlay::before {
+.ci-overlay::before,
+.ci-isometric-pattern {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(to right,  #1a1a1a 1px, transparent 1px),
-    linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
-  background-size: 4rem 4rem;
+  --s: 200px; /* control the size */
+  --c1: #1d1d1d;
+  --c2: #4e4f51;
+  --c3: #3c3c3c;
+
+  background: repeating-conic-gradient(
+        from 30deg,
+        #0000 0 120deg,
+        var(--c3) 0 180deg
+      )
+      calc(0.5 * var(--s)) calc(0.5 * var(--s) * 0.577),
+    repeating-conic-gradient(
+      from 30deg,
+      var(--c1) 0 60deg,
+      var(--c2) 0 120deg,
+      var(--c3) 0 180deg
+    );
+  background-size: var(--s) calc(var(--s) * 0.577);
   mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
-  opacity: 0.3;
+  opacity: 0.22;
   pointer-events: none;
   z-index: 0;
   animation: ci-grid-breath 12s ease-in-out infinite;
@@ -510,6 +525,11 @@ body.ci-active header {
   text-align: center;
 }
 
+.ci-word-crop {
+  display: inline-block;
+  vertical-align: bottom;
+}
+
 /* ── Indictment Staggered Word Slide-up ────────────────── */
 .ci-indictment-word {
   display: inline-block;
@@ -560,7 +580,6 @@ body.ci-active header {
   font-weight: 700;
 }
 
-/* ── "standardize" colour bleed — slow gradual turn ───────── */
 .ci-standardize {
   /* NOTE: display is inherited from parent ci-indictment-word (inline-block) */
   /* do NOT set display:inline here — it breaks the slide-up transform */
@@ -568,7 +587,7 @@ body.ci-active header {
   font-weight: 400;
   color: #ffffff;
   position: relative;
-  top: -0.05em; /* shift baseline slightly upwards to match Bricolage Grotesque alignment */
+  top: 0.02em; /* shift baseline slightly downwards to match Bricolage Grotesque alignment */
   transition: 
     transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
@@ -703,7 +722,7 @@ body.ci-done .ci-hero-word--delay-10 { transition-delay: 0.56s; }
 .ci-hero-standardize {
   color: #ffffff;
   position: relative;
-  top: -0.05em; /* shift baseline slightly upwards to match Bricolage Grotesque alignment */
+  top: 0.02em; /* shift baseline slightly downwards to match Bricolage Grotesque alignment */
   transition: color 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s,
               text-shadow 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s;
 }
@@ -749,20 +768,22 @@ body.ci-done .ci-hero-standardize {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.85rem 3.5rem;
-  border-radius: 2px;
+  padding: 1.3em 3em;
+  border-radius: 45px;
 
   /* Typography */
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.3em;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: #ffffff;
+  color: #000000;
 
   /* Surface */
-  background: transparent;
-  border: 1px solid rgba(255, 87, 51, 0.35);
+  background-color: #ffffff;
+  border: none;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  outline: none;
 
   /* Cursor */
   cursor: pointer;
@@ -772,28 +793,32 @@ body.ci-done .ci-hero-standardize {
   transform: translateY(10px);
   pointer-events: none; /* disabled by default to prevent pre-intro clicks */
 
-  /* Hover */
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: all 0.3s ease 0s;
 }
+
 /* Trigger animation and enable clicks when the active class is added */
 .hero-enter-btn--active {
   pointer-events: auto;
-  animation:
-    heroEnterFadeIn 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards,
-    heroEnterPulse  3.0s ease-in-out 2.8s infinite;
-}
-.hero-enter-btn:hover {
-  background: rgba(255, 87, 51, 0.08);
-  color: #FF5733;
+  animation: heroEnterFadeIn 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
 }
 
-/* Reduced motion: appear instantly, no pulse */
+.hero-enter-btn:hover {
+  background-color: #FF5733;
+  color: #ffffff;
+  box-shadow: 0px 15px 20px rgba(255, 87, 51, 0.4);
+  transform: translateY(-7px);
+}
+
+.hero-enter-btn:active {
+  transform: translateY(-1px);
+}
+
+/* Reduced motion: appear instantly */
 @media (prefers-reduced-motion: reduce) {
   .hero-enter-btn {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-    border-color: rgba(255, 87, 51, 0.50);
   }
 }
 
