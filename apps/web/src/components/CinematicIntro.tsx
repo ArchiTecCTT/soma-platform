@@ -34,6 +34,24 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
   const isComplete   = useRef(false);
   const timers       = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // ── Derived booleans ─────────────────────────────────────────────────────────
+  const states: IntroState[] = [
+    'pre-reveal', 'reveal', 'slashes-reveal', 'soma-reveal', 'dock',
+    'indictment-1', 'indictment-2', 'indictment-3', 'indictment-4',
+    'world-open', 'complete',
+  ];
+  const stateIdx = states.indexOf(introState);
+
+  const atOrPast = (s: IntroState) => stateIdx >= states.indexOf(s);
+
+  const isDocked         = atOrPast('dock');
+  const showIndictment1  = atOrPast('indictment-1');
+  const showIndictment2  = atOrPast('indictment-2');
+  const showIndictment3  = atOrPast('indictment-3');
+  const showIndictment4  = atOrPast('indictment-4');
+  const showWorldOpen    = atOrPast('world-open');
+  const overlayDone      = atOrPast('complete');
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   const pushTimer = useCallback((fn: () => void, ms: number) => {
@@ -174,23 +192,6 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
     return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); };
   }, [measureDockTarget]);
 
-  // ── Derived booleans ─────────────────────────────────────────────────────────
-  const states: IntroState[] = [
-    'pre-reveal', 'reveal', 'slashes-reveal', 'soma-reveal', 'dock',
-    'indictment-1', 'indictment-2', 'indictment-3', 'indictment-4',
-    'world-open', 'complete',
-  ];
-  const stateIdx = states.indexOf(introState);
-
-  const atOrPast = (s: IntroState) => stateIdx >= states.indexOf(s);
-
-  const isDocked         = atOrPast('dock');
-  const showIndictment1  = atOrPast('indictment-1');
-  const showIndictment2  = atOrPast('indictment-2');
-  const showIndictment3  = atOrPast('indictment-3');
-  const showIndictment4  = atOrPast('indictment-4');
-  const showWorldOpen    = atOrPast('world-open');
-  const overlayDone      = atOrPast('complete');
 
   if (introState === 'complete') return null;
 
