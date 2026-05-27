@@ -275,6 +275,8 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
             id="hero-enter-btn"
             className={`hero-enter-btn ${showIndictment4 ? 'hero-enter-btn--active' : ''}`}
             onClick={showIndictment4 ? handleEnter : undefined}
+            disabled={!showIndictment4}
+            aria-disabled={!showIndictment4}
           >
             UNDERSTAND ITS UTILITY
           </button>
