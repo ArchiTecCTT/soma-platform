@@ -13,6 +13,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [loadingStatus, setLoadingProgressStatus] = useState<string>('INITIALIZING COGNITIVE CORE...');
+  const [loadingFadeOut, setLoadingFadeOut] = useState<boolean>(false);
 
   // Cinematic Intro State
   const [introVisible, setIntroVisible] = useState<boolean>(true);
@@ -63,7 +64,8 @@ export default function App() {
       setLoadingProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
-          doneTimeout = setTimeout(() => setIsLoading(false), 600);
+          setLoadingFadeOut(true);
+          doneTimeout = setTimeout(() => setIsLoading(false), 700);
           return 100;
         }
         const nextProgress = prev + Math.floor(Math.random() * 15) + 5;
@@ -218,34 +220,32 @@ export default function App() {
     ]);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-brand-black flex flex-col justify-center items-center p-6 select-none">
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="flex justify-center items-center space-x-3">
-            <div className="w-4 h-4 bg-brand-accent animate-ping rounded-full"></div>
-            <span className="font-mono tracking-[0.3em] text-sm font-bold text-white">ORNYX // SOMA</span>
-          </div>
-
-          <div className="space-y-2">
-            <div className="h-1 w-full bg-brand-gray rounded-full overflow-hidden">
-              <div
-                style={{ width: `${loadingProgress}%` }}
-                className="h-full bg-gradient-to-r from-brand-accent to-brand-cyan transition-all duration-150"
-              ></div>
+  return (
+    <div className="min-h-screen flex flex-col bg-brand-black text-gray-100 selection:bg-brand-accent selection:text-black">
+      {/* Loading Screen Overlay */}
+      {isLoading && (
+        <div className={`fixed inset-0 bg-brand-black flex flex-col justify-center items-center p-6 select-none z-[1000] transition-opacity duration-700 ease-in-out ${loadingFadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className="max-w-md w-full space-y-8 text-center">
+            <div className="flex justify-center items-center space-x-3">
+              <div className="w-4 h-4 bg-brand-accent animate-ping rounded-full"></div>
+              <span className="font-mono tracking-[0.3em] text-sm font-bold text-white">ORNYX // SOMA</span>
             </div>
-            <div className="flex justify-between text-[10px] font-mono text-brand-textMuted">
-              <span>{loadingStatus}</span>
-              <span>{loadingProgress}%</span>
+
+            <div className="space-y-2">
+              <div className="h-1 w-full bg-brand-gray rounded-full overflow-hidden">
+                <div
+                  style={{ width: `${loadingProgress}%` }}
+                  className="h-full bg-gradient-to-r from-brand-accent to-brand-cyan transition-all duration-150"
+                ></div>
+              </div>
+              <div className="flex justify-between text-[10px] font-mono text-brand-textMuted">
+                <span>{loadingStatus}</span>
+                <span>{loadingProgress}%</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex flex-col bg-brand-black text-gray-100 selection:bg-brand-accent selection:text-black">
+      )}
 
       {/* Cinematic Intro Overlay */}
       {introVisible && (
