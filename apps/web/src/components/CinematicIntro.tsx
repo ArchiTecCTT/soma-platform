@@ -238,19 +238,20 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
       >
         {/* Line 1 */}
         <p className="ci-line ci-line--1">
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>We</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-1`}>built</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>a</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-3`}>system</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-4`}>to</span></span>
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>We</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-1`}>built</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>a</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-3`}>system</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment1 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-4`}>to</span></span>
         </p>
 
         {/* Line 2 — standardize colour-bleeds after delay */}
         <p className="ci-line ci-line--2">
-          <span className="inline-block overflow-hidden">
+          <span className={`inline-block ${standardizeOrange ? '' : 'overflow-hidden'}`}>
             <span
               className={[
                 'ci-indictment-word',
+                'interactive',
                 showIndictment2 ? 'ci-indictment-word--in' : '',
                 'ci-indictment-word--delay-0',
                 'ci-standardize',
@@ -260,15 +261,15 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
               standardize
             </span>
           </span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment2 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>minds.</span></span>
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment2 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>minds.</span></span>
         </p>
 
         {/* Line 3 */}
         <p className="ci-line ci-line--3">
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>It</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>worked.</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0 ci-bold`}>Too</span></span>{' '}
-          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2 ci-bold`}>well.</span></span>
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0`}>It</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment3 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2`}>worked.</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-0 ci-bold`}>Too</span></span>{' '}
+          <span className="inline-block overflow-hidden"><span className={`ci-indictment-word interactive ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2 ci-bold`}>well.</span></span>
         </p>
 
         {/* Post-intro gate: Enter button is always in the DOM to prevent vertical layout centering shifts */}
@@ -278,7 +279,7 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
             className={`hero-enter-btn ${showIndictment4 ? 'hero-enter-btn--active' : ''}`}
             onClick={showIndictment4 ? handleEnter : undefined}
           >
-            ENTER
+            UNDERSTAND ITS UTILITY
           </button>
         </div>
       </div>
