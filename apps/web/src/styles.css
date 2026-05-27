@@ -485,7 +485,7 @@ body.ci-active header {
   gap: clamp(0.5rem, 1.5vw, 1.1rem);
   z-index: 10;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto; /* changed to auto to support active children pointers */
   transition: opacity 0.5s ease;
 }
 .ci-indictment--visible {
@@ -737,15 +737,20 @@ body.ci-done .ci-hero-standardize {
   /* Cursor */
   cursor: pointer;
 
-  /* Fade-in: starts invisible, slowly appears after 0.6s delay once mounted */
+  /* Fade-in: starts invisible, slowly appears after 0.6s delay once active */
   opacity: 0;
   transform: translateY(10px);
-  animation:
-    heroEnterFadeIn 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards,
-    heroEnterPulse  3.0s ease-in-out 2.8s infinite;
+  pointer-events: none; /* disabled by default to prevent pre-intro clicks */
 
   /* Hover */
   transition: background 0.3s ease, color 0.3s ease;
+}
+/* Trigger animation and enable clicks when the active class is added */
+.hero-enter-btn--active {
+  pointer-events: auto;
+  animation:
+    heroEnterFadeIn 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards,
+    heroEnterPulse  3.0s ease-in-out 2.8s infinite;
 }
 .hero-enter-btn:hover {
   background: rgba(255, 87, 51, 0.08);
