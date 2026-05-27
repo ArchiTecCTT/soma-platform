@@ -284,3 +284,385 @@ button, input, textarea { font: inherit; }
     transition: none !important;
   }
 }
+
+/* ============================================================
+   CINEMATIC INTRO SEQUENCE
+   Prefix: ci-
+   ============================================================ */
+
+/* Scroll lock while intro is running */
+body.ci-active {
+  overflow: hidden;
+  height: 100svh;
+}
+/* Disable mouse/focus interaction with hidden hero elements underneath overlay (fixes Coderabbit/Copilot) */
+body.ci-active .ci-hero-content,
+body.ci-active header {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* ── Full-screen overlay ──────────────────────────────────── */
+.ci-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: #030303;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto; /* consumes clicks so they don't leak underneath (fixes Coderabbit/Copilot) */
+  transition: opacity 0.7s ease, visibility 0s linear 0.7s;
+  opacity: 1;
+  visibility: visible;
+}
+.ci-overlay--done {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ── Scanlines decorative texture ────────────────────────── */
+.ci-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(255, 255, 255, 0.012) 3px,
+    rgba(255, 255, 255, 0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+  animation: ci-scanline-flicker 0.08s steps(1) 0.35s 3;
+}
+@keyframes ci-scanline-flicker {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+/* ── Centered wordmark logo ───────────────────────────────── */
+.ci-logo {
+  position: relative;
+  z-index: 10;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.35em;
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  white-space: nowrap;
+  /* Start: invisible + blurred + slightly small */
+  opacity: 0;
+  filter: blur(16px);
+  transform: scale(0.90);
+  will-change: transform, opacity, filter, font-size, letter-spacing;
+  transition:
+    opacity     1.8s  cubic-bezier(0.25, 1, 0.5, 1),
+    filter      2.0s  cubic-bezier(0.25, 1, 0.5, 1),
+    transform   2.2s  cubic-bezier(0.16, 1, 0.3, 1),
+    letter-spacing 2.2s cubic-bezier(0.16, 1, 0.3, 1),
+    font-size   1.2s  cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reveal: unblur + fade in */
+.ci-logo--visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+  letter-spacing: 0.08em;
+}
+
+/* Dock: shrink + fly to nav position */
+.ci-logo--docked {
+  font-size: 0.875rem; /* matches nav text-sm */
+  letter-spacing: 0.18em;
+  transform: translate3d(var(--dock-x, 0px), var(--dock-y, 0px), 0) scale(1);
+  transition:
+    font-size      1.20s cubic-bezier(0.22, 1, 0.36, 1),
+    letter-spacing 1.20s cubic-bezier(0.22, 1, 0.36, 1),
+    transform      1.20s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity        0.4s  ease 0.45s;
+}
+
+/* After dock — fade out so real nav takes over */
+.ci-logo--hidden {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+/* ORNYX part — always white */
+.ci-logo__ornyx {
+  color: #ffffff;
+}
+
+/* Unit wrapper containing ORNYX and slashes for styling co-alignment */
+.ci-logo__unit-1 {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+/* Slashes (//) part — orange, bottom-to-top clip-path reveal. Collapses layout when hidden. */
+.ci-logo__slashes {
+  display: inline-block;
+  color: #FF5733;
+  margin-left: 0;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  clip-path: inset(100% 0 0 0); /* completely hidden from the bottom */
+  transform: translateY(14px); /* subtle upward translation */
+  will-change: transform, opacity, clip-path, max-width, margin-left;
+  transition:
+    opacity 0.7s cubic-bezier(0.25, 1, 0.5, 1),
+    clip-path 1.0s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.0s cubic-bezier(0.16, 1, 0.3, 1),
+    max-width 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    margin-left 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ci-logo__slashes--visible {
+  opacity: 1;
+  margin-left: 0.08em; /* tighter inline spacing for professional typography */
+  max-width: 2ch;
+  clip-path: inset(0 0 0 0);
+  transform: translateY(0);
+  overflow: visible;
+}
+
+/* SOMA part — orange, swooshes in from the slashes 0.5s later. Collapses layout when hidden. */
+.ci-logo__soma {
+  display: inline-block;
+  color: #FF5733;
+  margin-left: 0;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateX(-40px) scale(0.7);
+  filter: blur(8px);
+  will-change: transform, opacity, filter, max-width, margin-left;
+  transition:
+    opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    filter 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), /* snappier swoosh trigger */
+    max-width 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    margin-left 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ci-logo__soma--visible {
+  opacity: 1;
+  margin-left: 0.08em; /* tighter inline spacing for professional typography */
+  max-width: 4ch;
+  transform: translateX(0) scale(1);
+  filter: blur(0);
+  overflow: visible;
+}
+
+/* ── Indictment text block ────────────────────────────────── */
+.ci-indictment {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1.5vw, 1.1rem);
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.ci-indictment--visible {
+  opacity: 1;
+}
+.ci-indictment--exit {
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Individual indictment lines ─────────────────────────── */
+.ci-line {
+  font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 300;
+  color: #ffffff;
+  line-height: 1.15;
+  margin: 0;
+  text-align: center;
+}
+
+/* ── Indictment Staggered Word Slide-up ────────────────── */
+.ci-indictment-word {
+  display: inline-block;
+  transform: translateY(115%);
+  opacity: 0;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  filter: blur(4px); /* subtle entry blur for premium feel */
+  transition: 
+    transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ci-indictment-word--in {
+  transform: translateY(0);
+  opacity: 1;
+  filter: blur(0);
+}
+
+/* Precise Stagger Delays within a line */
+.ci-indictment-word--delay-0 { transition-delay: 0.00s; }
+.ci-indictment-word--delay-1 { transition-delay: 0.05s; }
+.ci-indictment-word--delay-2 { transition-delay: 0.10s; }
+.ci-indictment-word--delay-3 { transition-delay: 0.15s; }
+.ci-indictment-word--delay-4 { transition-delay: 0.20s; }
+
+/* "It worked. Too well." — heavier weight */
+.ci-line--3 {
+  font-weight: 400;
+}
+
+/* bold span within line 3 */
+.ci-bold {
+  font-weight: 700;
+}
+
+/* ── "standardize" colour bleed — slow gradual turn ───────── */
+.ci-standardize {
+  /* NOTE: display is inherited from parent ci-indictment-word (inline-block) */
+  /* do NOT set display:inline here — it breaks the slide-up transform */
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 400;
+  color: #ffffff;
+  transition: 
+    transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    color 2.5s cubic-bezier(0.25, 1, 0.5, 1),
+    text-shadow 2.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.ci-standardize--orange {
+  color: #FF5733;
+  text-shadow: 0 0 35px rgba(255, 87, 51, 0.60), 0 0 15px rgba(255, 87, 51, 0.25);
+}
+
+/* ── Skip hint ────────────────────────────────────────────── */
+.ci-skip {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.2);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+}
+.ci-skip--visible {
+  opacity: 1;
+}
+
+/* ── Hero content gated behind ci-done body class ─────────── */
+/* While active: nav links + CTA hidden */
+body.ci-active header nav,
+body.ci-active header > div:last-child {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+/* Nav wordmark (the real one) hidden while overlay logo is animating */
+body.ci-active .ci-nav-wordmark {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+/* After done: everything fades back in */
+body.ci-done .ci-nav-wordmark,
+body.ci-done header nav,
+body.ci-done header > div:last-child {
+  opacity: 1;
+  transition: opacity 0.55s ease 0.1s;
+}
+
+/* Hero content hidden until world-open */
+body.ci-active .ci-hero-content {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: none;
+}
+body.ci-done .ci-hero-content {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity   0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1.0s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Staggered children of ci-hero-content */
+body.ci-done .ci-hero-content > *:nth-child(1) { transition-delay: 0.05s; }
+body.ci-done .ci-hero-content > *:nth-child(2) { transition-delay: 0.18s; }
+body.ci-done .ci-hero-content > *:nth-child(3) { transition-delay: 0.32s; }
+body.ci-done .ci-hero-content > *:nth-child(4) { transition-delay: 0.48s; }
+
+/* ── Reduced-motion: overlay skips instantly ────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ci-overlay        { display: none !important; }
+  .ci-scanlines      { animation: none !important; }
+  body.ci-active     { overflow: unset !important; height: unset !important; }
+  body.ci-active .ci-hero-content  { opacity: 1 !important; transform: none !important; }
+  body.ci-active header nav,
+  body.ci-active header > div:last-child { opacity: 1 !important; pointer-events: auto !important; }
+}
+
+/* ── Main Hero Animated Typography (Staggered Word Slide-up) ─────────── */
+.ci-hero-word {
+  display: block;
+  transform: translateY(115%);
+  opacity: 0;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  filter: blur(0px); /* forces sub-pixel anti-aliasing rendering in Chrome/Firefox */
+  transition: none;
+}
+body.ci-done .ci-hero-word {
+  transform: translateY(0);
+  opacity: 1;
+  filter: blur(0px);
+  transition: 
+    transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Precise Stagger Delays for each word */
+body.ci-done .ci-hero-word--delay-0  { transition-delay: 0.00s; }
+body.ci-done .ci-hero-word--delay-1  { transition-delay: 0.04s; }
+body.ci-done .ci-hero-word--delay-2  { transition-delay: 0.08s; }
+body.ci-done .ci-hero-word--delay-3  { transition-delay: 0.12s; }
+body.ci-done .ci-hero-word--delay-4  { transition-delay: 0.16s; }
+body.ci-done .ci-hero-word--delay-5  { transition-delay: 0.20s; }
+body.ci-done .ci-hero-word--delay-6  { transition-delay: 0.24s; }
+body.ci-done .ci-hero-word--delay-7  { transition-delay: 0.40s; }
+body.ci-done .ci-hero-word--delay-8  { transition-delay: 0.44s; }
+body.ci-done .ci-hero-word--delay-9  { transition-delay: 0.50s; }
+body.ci-done .ci-hero-word--delay-10 { transition-delay: 0.56s; }
+
+/* "standardize" color bleed inside hero text */
+.ci-hero-standardize {
+  color: #ffffff;
+  transition: color 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s,
+              text-shadow 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s;
+}
+body.ci-done .ci-hero-standardize {
+  color: #FF5733;
+  text-shadow: 0 0 35px rgba(255, 87, 51, 0.55), 0 0 15px rgba(255, 87, 51, 0.20);
+}
