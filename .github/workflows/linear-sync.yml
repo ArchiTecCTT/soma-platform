@@ -1,0 +1,134 @@
+name: Linear Issue Sync
+
+on:
+  pull_request:
+    types: [closed, review_requested]
+  workflow_dispatch:
+    inputs:
+      issue_id:
+        description: 'Linear issue ID (e.g., ALL-123)'
+        required: true
+        type: string
+      action:
+        description: 'Action to take'
+        required: true
+        type: choice
+        options:
+          - complete
+          - cancel
+          - start_review
+
+jobs:
+  sync-linear:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract Linear Issue ID
+        id: extract
+        run: |
+          if [ -n "${{ github.event.pull_request.title }}" ]; then
+            # Extract from PR title (e.g., "feat: Add voice (ALL-123)")
+            ISSUE=$(echo "${{ github.event.pull_request.title }}" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+          fi
+          
+          if [ -z "$ISSUE" ] && [ -n "${{ github.event.pull_request.head.ref }}" ]; then
+            # Extract from branch name (e.g., feature/ALL-123-add-voice)
+            ISSUE=$(echo "${{ github.event.pull_request.head.ref }}" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+          fi
+          
+          # Manual trigger override
+          if [ -n "${{ inputs.issue_id }}" ]; then
+            ISSUE="${{ inputs.issue_id }}"
+          fi
+          
+          if [ -z "$ISSUE" ]; then
+            echo "No Linear issue found in PR title or branch name"
+            echo "issue_id=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Found Linear issue: $ISSUE"
+          echo "issue_id=$ISSUE" >> $GITHUB_OUTPUT
+
+      - name: Get Issue UUID from Linear
+        if: steps.extract.outputs.issue_id != ''
+        id: get-issue
+        run: |
+          RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.LINEAR_API_KEY }}" \
+            -d "{\"query\": \"query { issueSearch(query: \\\"${{ steps.extract.outputs.issue_id }}\\\", first: 1) { nodes { id identifier state { name type } } } }\"}")
+          
+          ISSUE_UUID=$(echo "$RESPONSE" | jq -r '.data.issueSearch.nodes[0].id')
+          STATE_TYPE=$(echo "$RESPONSE" | jq -r '.data.issueSearch.nodes[0].state.type')
+          
+          if [ "$ISSUE_UUID" == "null" ]; then
+            echo "Could not find issue ${{ steps.extract.outputs.issue_id }}"
+            exit 1
+          fi
+          
+          echo "Issue UUID: $ISSUE_UUID"
+          echo "Current state: $STATE_TYPE"
+          echo "issue_uuid=$ISSUE_UUID" >> $GITHUB_OUTPUT
+          echo "current_state=$STATE_TYPE" >> $GITHUB_OUTPUT
+
+      - name: Get workflow states
+        if: steps.extract.outputs.issue_id != ''
+        id: get-states
+        run: |
+          RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.LINEAR_API_KEY }}" \
+            -d '{"query": "query { workflowStates { nodes { id name type } } }"}')
+          
+          # Get target state based on action
+          ACTION="${{ github.event.action }}"
+          if [ -n "${{ inputs.action }}" ]; then
+            ACTION="${{ inputs.action }}"
+          fi
+          
+          case "$ACTION" in
+            closed)
+              TARGET_TYPE="completed"
+              ;;
+            cancel|canceled)
+              TARGET_TYPE="canceled"
+              ;;
+            review_requested)
+              TARGET_TYPE="started"
+              ;;
+            complete)
+              TARGET_TYPE="completed"
+              ;;
+            start_review)
+              TARGET_TYPE="started"
+              ;;
+            *)
+              # For PRs, closed means completed
+              if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
+                TARGET_TYPE="completed"
+              else
+                TARGET_TYPE="canceled"
+              fi
+              ;;
+          esac
+          
+          TARGET_STATE=$(echo "$RESPONSE" | jq -r ".data.workflowStates.nodes[] | select(.type == \"$TARGET_TYPE\") | .id" | head -1)
+          
+          echo "Target state type: $TARGET_TYPE"
+          echo "Target state UUID: $TARGET_STATE"
+          echo "target_state=$TARGET_STATE" >> $GITHUB_OUTPUT
+
+      - name: Update Linear Issue
+        if: steps.extract.outputs.issue_id != ''
+        run: |
+          if [ -z "${{ steps.get-states.outputs.target_state }}" ]; then
+            echo "No target state found, skipping update"
+            exit 0
+          fi
+          
+          curl -s -X POST https://api.linear.app/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.LINEAR_API_KEY }}" \
+            -d "{\"query\": \"mutation { issueUpdate(id: \\\"${{ steps.get-issue.outputs.issue_uuid }}\\\", input: { stateId: \\\"${{ steps.get-states.outputs.target_state }}\\\" }) { success issue { identifier state { name } } } }\"}" | jq '.data.issueUpdate'
+          
+          echo "::notice::Updated Linear issue ${{ steps.extract.outputs.issue_id }} to ${{ github.event.action }}"
