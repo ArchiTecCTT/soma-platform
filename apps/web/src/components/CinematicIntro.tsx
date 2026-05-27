@@ -141,6 +141,9 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
 
   // ── Skip on scroll / touch / click / key ─────────────────────────────────────
   useEffect(() => {
+    // Only capture skip gestures while the intro animations are running (before indictment-4 / gated state is reached)
+    if (showIndictment4) return;
+
     const onWheel  = () => skip();
     const onTouch  = () => skip();
     const onClick  = () => skip();
@@ -158,7 +161,7 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
       window.removeEventListener('click',     onClick);
       window.removeEventListener('keydown',   onKey);
     };
-  }, [skip]);
+  }, [skip, showIndictment4]);
 
   // ── Realign dock target on window resize ────────────────────────────────────
   useEffect(() => {
@@ -267,18 +270,16 @@ export default function CinematicIntro({ onComplete, navWordmarkRef }: Cinematic
           <span className="inline-block overflow-hidden"><span className={`ci-indictment-word ${showIndictment4 ? 'ci-indictment-word--in' : ''} ci-indictment-word--delay-2 ci-bold`}>well.</span></span>
         </p>
 
-        {/* Post-intro gate: Enter button fades in slowly with a pulse below the indictment text */}
-        {showIndictment4 && (
-          <div className="pt-8 flex justify-center w-full z-20">
-            <button
-              id="hero-enter-btn"
-              className="hero-enter-btn"
-              onClick={handleEnter}
-            >
-              ENTER
-            </button>
-          </div>
-        )}
+        {/* Post-intro gate: Enter button is always in the DOM to prevent vertical layout centering shifts */}
+        <div className="pt-8 flex justify-center w-full z-20">
+          <button
+            id="hero-enter-btn"
+            className={`hero-enter-btn ${showIndictment4 ? 'hero-enter-btn--active' : ''}`}
+            onClick={showIndictment4 ? handleEnter : undefined}
+          >
+            ENTER
+          </button>
+        </div>
       </div>
 
       {/* ── Skip hint — only visible until the ENTER button is ready ──────────────── */}
