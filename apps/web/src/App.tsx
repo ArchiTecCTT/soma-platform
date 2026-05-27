@@ -16,6 +16,7 @@ export default function App() {
 
   // Cinematic Intro State
   const [introVisible, setIntroVisible] = useState<boolean>(true);
+  const [isGated, setIsGated] = useState<boolean>(true);
   const navWordmarkRef = useRef<HTMLSpanElement | null>(null);
 
   // Narrative Navigation State
@@ -142,6 +143,16 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isAudioPlaying]);
 
+  // Lock scroll while gate is active; release when gate clears
+  useEffect(() => {
+    if (isGated) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isGated]);
+
   // Add a system log helper
   const addLog = (type: EventLog['type'], message: string) => {
     setEventLogs(prev => [
@@ -239,7 +250,10 @@ export default function App() {
       {/* Cinematic Intro Overlay */}
       {introVisible && (
         <CinematicIntro
-          onComplete={() => setIntroVisible(false)}
+          onComplete={() => {
+            setIntroVisible(false);
+            setIsGated(true);
+          }}
           navWordmarkRef={navWordmarkRef}
         />
       )}
@@ -256,20 +270,24 @@ export default function App() {
           <div className="w-3 h-3 bg-brand-accent animate-pulse rounded-full"></div>
           <span ref={navWordmarkRef} className="ci-nav-wordmark font-mono tracking-widest text-sm font-bold text-white">ORNYX // SOMA</span>
         </div>
-        <nav className="hidden md:flex space-x-8 text-xs font-mono tracking-wider text-brand-textMuted">
-          <a href="#narrative" className={`transition-colors ${activeSection === 'narrative' ? 'text-brand-accent' : 'hover:text-white'}`}>01 / THE PROBLEM</a>
-          <a href="#sandbox" className={`transition-colors ${activeSection === 'sandbox' ? 'text-brand-cyan' : 'hover:text-white'}`}>02 / LIVE DEMO</a>
-          <a href="#comparison" className={`transition-colors ${activeSection === 'comparison' ? 'text-white' : 'hover:text-white'}`}>03 / ARCHITECTURE</a>
-          <a href="#roadmap" className={`transition-colors ${activeSection === 'roadmap' ? 'text-white' : 'hover:text-white'}`}>04 / ROADMAP</a>
-        </nav>
-        <div>
-          <a
-            href="#cta"
-            className="px-4 py-1.5 border border-brand-accent/40 hover:border-brand-accent text-brand-accent hover:bg-brand-accent/10 transition-all text-xs font-mono tracking-wider rounded"
-          >
-            INITIATE SESSION
-          </a>
-        </div>
+        {!isGated && (
+          <nav className="hidden md:flex space-x-8 text-xs font-mono tracking-wider text-brand-textMuted">
+            <a href="#narrative" className={`transition-colors ${activeSection === 'narrative' ? 'text-brand-accent' : 'hover:text-white'}`}>01 / THE PROBLEM</a>
+            <a href="#sandbox" className={`transition-colors ${activeSection === 'sandbox' ? 'text-brand-cyan' : 'hover:text-white'}`}>02 / LIVE DEMO</a>
+            <a href="#comparison" className={`transition-colors ${activeSection === 'comparison' ? 'text-white' : 'hover:text-white'}`}>03 / ARCHITECTURE</a>
+            <a href="#roadmap" className={`transition-colors ${activeSection === 'roadmap' ? 'text-white' : 'hover:text-white'}`}>04 / ROADMAP</a>
+          </nav>
+        )}
+        {!isGated && (
+          <div>
+            <a
+              href="#cta"
+              className="px-4 py-1.5 border border-brand-accent/40 hover:border-brand-accent text-brand-accent hover:bg-brand-accent/10 transition-all text-xs font-mono tracking-wider rounded"
+            >
+              INITIATE SESSION
+            </a>
+          </div>
+        )}
       </header>
 
       {/* Main Content Container */}
@@ -303,44 +321,51 @@ export default function App() {
               </span>
             </h1>
 
-            {/* Hero Sub-header */}
-            <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light tracking-wide">
-              Industrial-era education optimized for obedience, predictability, and compliance. But modern technical life rewards the exact opposite: <span className="text-white font-medium">autonomy, synthesis, and adversarial reasoning</span>.
-            </p>
+            {/* Hero Sub-header — hidden while gated */}
+            {!isGated && (
+              <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-light tracking-wide">
+                Industrial-era education optimized for obedience, predictability, and compliance. But modern technical life rewards the exact opposite: <span className="text-white font-medium">autonomy, synthesis, and adversarial reasoning</span>.
+              </p>
+            )}
+            {/* Post-intro gate: Enter button is now managed inside CinematicIntro overlay */}
 
-            {/* Hero Buttons: Sequenced left-slide and fade-in */}
-            <div className="pt-6 flex flex-col sm:flex-row justify-center items-center gap-8">
-              <button
-                onClick={() => {
-                  document.getElementById('historical-context')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="px-8 py-4 bg-brand-gray hover:bg-brand-lightGray border border-brand-lightGray text-white text-xs font-mono tracking-widest transition-all rounded hover:border-brand-accent/50 hover:shadow-[0_0_20px_rgba(255,87,51,0.15)]"
-              >
-                BEGIN HISTORICAL INQUIRY
-              </button>
-              <a
-                href="#sandbox"
-                className="text-xs font-mono tracking-widest text-brand-textMuted hover:text-white transition-colors underline underline-offset-4"
-              >
-                SKIP TO LIVE SANDBOX
-              </a>
-            </div>
+            {/* Hero Buttons: visible only when not gated */}
+            {!isGated && (
+              <div className="pt-6 flex flex-col sm:flex-row justify-center items-center gap-8">
+                <button
+                  onClick={() => {
+                    document.getElementById('historical-context')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-8 py-4 bg-brand-gray hover:bg-brand-lightGray border border-brand-lightGray text-white text-xs font-mono tracking-widest transition-all rounded hover:border-brand-accent/50 hover:shadow-[0_0_20px_rgba(255,87,51,0.15)]"
+                >
+                  BEGIN HISTORICAL INQUIRY
+                </button>
+                <a
+                  href="#sandbox"
+                  className="text-xs font-mono tracking-widest text-brand-textMuted hover:text-white transition-colors underline underline-offset-4"
+                >
+                  SKIP TO LIVE SANDBOX
+                </a>
+              </div>
+            )}
           </div>
 
-          {/* Scroll indicator: Highly visible, static text, flowing light track */}
-          <div
-            onClick={() => {
-              document.getElementById('historical-context')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-4 z-20 cursor-pointer group"
-          >
-            <span className="text-xs font-mono tracking-[0.3em] text-brand-accent font-semibold uppercase transition-colors group-hover:text-white">
-              SCROLL TO DESCEND
-            </span>
-            <div className="w-[2px] h-16 bg-brand-gray/80 relative overflow-hidden rounded-full">
-              <div className="absolute top-0 left-0 w-full h-1/2 bg-brand-accent rounded-full animate-scroll-flow"></div>
+          {/* Scroll indicator — hidden while gated */}
+          {!isGated && (
+            <div
+              onClick={() => {
+                document.getElementById('historical-context')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex flex-col items-center space-y-4 z-20 cursor-pointer group"
+            >
+              <span className="text-xs font-mono tracking-[0.3em] text-brand-accent font-semibold uppercase transition-colors group-hover:text-white">
+                SCROLL TO DESCEND
+              </span>
+              <div className="w-[2px] h-16 bg-brand-gray/80 relative overflow-hidden rounded-full">
+                <div className="absolute top-0 left-0 w-full h-1/2 bg-brand-accent rounded-full animate-scroll-flow"></div>
+              </div>
             </div>
-          </div>
+          )}
         </section>
 
 
