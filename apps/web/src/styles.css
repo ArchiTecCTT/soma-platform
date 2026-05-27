@@ -316,7 +316,7 @@ body.ci-active header {
   opacity: 1;
   visibility: visible;
 }
-/* Subtle grid background that perfectly matches the hero's grid pattern, opacity, and radial mask */
+/* Subtle grid background that perfectly matches the hero's grid pattern, opacity, and radial mask with breathing animation */
 .ci-overlay::before {
   content: "";
   position: absolute;
@@ -330,6 +330,8 @@ body.ci-active header {
   opacity: 0.3;
   pointer-events: none;
   z-index: 0;
+  animation: ci-grid-breath 12s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 .ci-overlay--done {
   opacity: 0;
@@ -518,15 +520,27 @@ body.ci-active header {
   -webkit-backface-visibility: hidden;
   transform-style: preserve-3d;
   filter: blur(4px); /* subtle entry blur for premium feel */
+  cursor: none;
   transition: 
     transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    filter 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.3s ease,
+    text-shadow 0.3s ease;
 }
 .ci-indictment-word--in {
   transform: translateY(0);
   opacity: 1;
   filter: blur(0);
+}
+.ci-indictment-word:hover {
+  color: #FF5733;
+  text-shadow: 0 0 15px rgba(255, 87, 51, 0.45);
+  transform: scale(1.08) translateY(-3px);
+  transition: 
+    transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    color 0.3s ease,
+    text-shadow 0.3s ease;
 }
 
 /* Precise Stagger Delays within a line */
@@ -647,6 +661,7 @@ body.ci-done .ci-hero-content > *:nth-child(4) { transition-delay: 0.48s; }
   -webkit-backface-visibility: hidden;
   transform-style: preserve-3d;
   filter: blur(0px); /* forces sub-pixel anti-aliasing rendering in Chrome/Firefox */
+  cursor: none;
   transition: none;
 }
 body.ci-done .ci-hero-word {
@@ -655,7 +670,18 @@ body.ci-done .ci-hero-word {
   filter: blur(0px);
   transition: 
     transform 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.3s ease,
+    text-shadow 0.3s ease;
+}
+body.ci-done .ci-hero-word:hover {
+  color: #FF5733;
+  text-shadow: 0 0 15px rgba(255, 87, 51, 0.45);
+  transform: scale(1.08) translateY(-3px);
+  transition: 
+    transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    color 0.3s ease,
+    text-shadow 0.3s ease;
 }
 
 /* Precise Stagger Delays for each word */
@@ -764,5 +790,22 @@ body.ci-done .ci-hero-standardize {
     opacity: 1 !important;
     transform: none !important;
     border-color: rgba(255, 87, 51, 0.50);
+  }
+}
+
+/* ── Breathing Background Grid ── */
+.ci-hero-grid-breath {
+  animation: ci-grid-breath 12s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes ci-grid-breath {
+  0%, 100% {
+    opacity: 0.20;
+    transform: scale(1.0);
+  }
+  50% {
+    opacity: 0.38;
+    transform: scale(1.015);
   }
 }
