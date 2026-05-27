@@ -567,6 +567,8 @@ body.ci-active header {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 400;
   color: #ffffff;
+  position: relative;
+  top: -0.05em; /* shift baseline slightly upwards to match Bricolage Grotesque alignment */
   transition: 
     transform 1.6s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
@@ -700,6 +702,8 @@ body.ci-done .ci-hero-word--delay-10 { transition-delay: 0.56s; }
 /* "standardize" color bleed inside hero text */
 .ci-hero-standardize {
   color: #ffffff;
+  position: relative;
+  top: -0.05em; /* shift baseline slightly upwards to match Bricolage Grotesque alignment */
   transition: color 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s,
               text-shadow 2.0s cubic-bezier(0.25, 1, 0.5, 1) 1.5s;
 }
