@@ -300,26 +300,26 @@ export default function App() {
             style={{ transform: `translateY(${scrollY * 0.15}px)` }}
             className="absolute inset-0 pointer-events-none"
           >
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30 ci-hero-grid-breath"></div>
+            <div className="ci-isometric-pattern"></div>
           </div>
 
           <div className="ci-hero-content max-w-4xl mx-auto z-10 space-y-10">
             {/* Hero Title */}
             <h1 className="text-5xl md:text-7xl font-light tracking-tight text-white leading-tight font-display">
               <span className="block w-full">
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-0">We</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-1">built</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-2">a</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-3">system</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-4">to</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-5 ci-hero-standardize font-mono font-normal">standardize</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-6">minds.</span></span>
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-0">We</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-1">built</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-2">a</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-3">system</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-4">to</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-5 ci-hero-standardize font-mono font-normal">standardize</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-6">minds.</span></span>
               </span>
               <span className="block w-full font-semibold">
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-7">It</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-8">worked.</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-9">Too</span></span>{' '}
-                <span className={`inline-block ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-10">well.</span></span>
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-7">It</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-8">worked.</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-9">Too</span></span>{' '}
+                <span className={`ci-word-crop ${!isGated ? '' : 'overflow-hidden'}`}><span className="ci-hero-word interactive ci-hero-word--delay-10">well.</span></span>
               </span>
             </h1>
 
