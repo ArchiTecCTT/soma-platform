@@ -346,7 +346,8 @@ body.ci-active header {
   pointer-events: none;
   z-index: 0;
   animation: ci-grid-breath 12s ease-in-out infinite;
-  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  will-change: opacity;
 }
 .ci-overlay--done {
   opacity: 0;
@@ -768,21 +769,21 @@ body.ci-done .ci-hero-standardize {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 1.3em 3em;
-  border-radius: 45px;
+  padding: 0.85rem 3.5rem;
+  border-radius: 2px;
 
   /* Typography */
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 2.5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: #000000;
+  color: #ffffff;
 
   /* Surface */
-  background-color: #ffffff;
-  border: none;
-  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  background: transparent;
+  border: 1px solid rgba(255, 87, 51, 0.35);
+  box-shadow: none;
   outline: none;
 
   /* Cursor */
@@ -805,6 +806,7 @@ body.ci-done .ci-hero-standardize {
 .hero-enter-btn:hover {
   background-color: #FF5733;
   color: #ffffff;
+  border-color: #FF5733;
   box-shadow: 0px 15px 20px rgba(255, 87, 51, 0.4);
   transform: translateY(-7px);
 }
@@ -825,16 +827,14 @@ body.ci-done .ci-hero-standardize {
 /* ── Breathing Background Grid ── */
 .ci-hero-grid-breath {
   animation: ci-grid-breath 12s ease-in-out infinite;
-  will-change: transform, opacity;
+  will-change: opacity;
 }
 
 @keyframes ci-grid-breath {
   0%, 100% {
-    opacity: 0.20;
-    transform: scale(1.0);
+    opacity: 0.18;
   }
   50% {
-    opacity: 0.38;
-    transform: scale(1.015);
+    opacity: 0.35;
   }
 }
