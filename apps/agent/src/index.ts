@@ -3,7 +3,7 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env'), quiet: true });
 
 // Map shared config schema to LiveKit Agent CLI expected keys
 if (process.env.LIVEKIT_WS_URL && !process.env.LIVEKIT_URL) {
