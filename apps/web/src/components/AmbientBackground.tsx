@@ -112,9 +112,9 @@ export default function AmbientBackground() {
       ];
     };
 
-    // Initialize 55 particles
+    // Initialize 30 particles (reduced from 55 for perf)
     const initializeParticles = () => {
-      particles = Array.from({ length: 55 }, () => {
+      particles = Array.from({ length: 30 }, () => {
         const baseAlpha = Math.random() * 0.35 + 0.1;
         return {
           x: Math.random() * width,
@@ -153,9 +153,9 @@ export default function AmbientBackground() {
       });
     };
 
-    // Handle high DPI display
+    // Handle high DPI display — cap DPR at 1.5 to avoid brutal GPU cost on Retina/HiDPI displays
     const resizeCanvas = () => {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       const rect = canvas.getBoundingClientRect();
       canvasRectRef.current = rect;
       width = rect.width;
@@ -191,9 +191,13 @@ export default function AmbientBackground() {
       }
     };
 
-    // Update canvas rect on scroll for parallax accuracy
+    // Update canvas rect on scroll — throttled with rAF to avoid forced layout thrashing
+    let scrollRafId = 0;
     const handleScroll = () => {
-      canvasRectRef.current = canvas.getBoundingClientRect();
+      cancelAnimationFrame(scrollRafId);
+      scrollRafId = requestAnimationFrame(() => {
+        canvasRectRef.current = canvas.getBoundingClientRect();
+      });
     };
 
     // Set up canvas sizes and populate arrays
@@ -207,12 +211,23 @@ export default function AmbientBackground() {
     window.addEventListener('mouseout', handleWindowMouseOut);
     window.addEventListener('blur', deactivateMouse);
 
+    // Pause canvas when tab is hidden to avoid wasted GPU cycles
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     // Animation Loop
     const animate = () => {
       if (prefersReducedMotion) {
         renderStaticFrame();
         return;
       }
+
+      // Skip frame if tab is hidden
+      if (document.hidden) return;
 
       ctx.clearRect(0, 0, width, height);
 
@@ -338,7 +353,9 @@ export default function AmbientBackground() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseout', handleWindowMouseOut);
       window.removeEventListener('blur', deactivateMouse);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(scrollRafId);
     };
   }, [prefersReducedMotion]);
 

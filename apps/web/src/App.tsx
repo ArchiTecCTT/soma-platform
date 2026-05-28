@@ -44,9 +44,9 @@ export default function App() {
   const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
   const [waveformBars, setWaveformBars] = useState<number[]>(Array(24).fill(10));
 
-  // Scroll tracking for scrollytelling effects
-  const [scrollY, setScrollY] = useState<number>(0);
-  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  // Refs for high-performance DOM scroll animations (bypassing React state re-renders)
+  const parallaxBgRef = useRef<HTMLDivElement | null>(null);
+  const svgPathRef = useRef<SVGPathElement | null>(null);
 
   // Simulated Boot Sequence
   useEffect(() => {
@@ -92,8 +92,15 @@ export default function App() {
       const currentScroll = window.scrollY;
       lastScrollY = currentScroll;
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollY(currentScroll);
-      setScrollProgress(totalHeight > 0 ? currentScroll / totalHeight : 0);
+      const progress = totalHeight > 0 ? currentScroll / totalHeight : 0;
+
+      // Direct DOM updates for butter-smooth 60/120fps performance (bypassing React re-render cycle)
+      if (parallaxBgRef.current) {
+        parallaxBgRef.current.style.transform = `translateY(${currentScroll * 0.15}px)`;
+      }
+      if (svgPathRef.current) {
+        svgPathRef.current.style.strokeDashoffset = `${1000 - progress * 1000}`;
+      }
     };
 
     const handleScroll = () => {
@@ -297,7 +304,7 @@ export default function App() {
         <section id="narrative" className="relative min-h-[95vh] flex flex-col justify-center items-center px-6 text-center overflow-hidden border-b border-brand-gray">
           {/* Subtle background grid with nested parallax and breathing layers */}
           <div
-            style={{ transform: `translateY(${scrollY * 0.15}px)` }}
+            ref={parallaxBgRef}
             className="absolute inset-0 pointer-events-none"
           >
             <div className="ci-isometric-pattern"></div>
@@ -372,16 +379,18 @@ export default function App() {
 
 
         {/* SECTION 2: Why the old system existed */}
-        <section id="historical-context" className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative overflow-hidden">
+        <section id="historical-context" className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative overflow-hidden">
           {/* Self-drawing SVG line connecting the beats driven by scroll progress */}
           <div className="absolute inset-0 pointer-events-none opacity-20">
             <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
               <path
+                ref={svgPathRef}
                 d="M 100 100 Q 300 300 500 100 T 900 400"
                 fill="none"
                 stroke="#FF5733"
                 strokeWidth="2"
-                style={{ strokeDashoffset: 1000 - (scrollProgress * 1000) }}
+                className="draw-path"
+                style={{ strokeDashoffset: 1000 }}
               />
             </svg>
           </div>
@@ -496,7 +505,7 @@ export default function App() {
 
 
         {/* SECTION 4: Why this becomes harmful now */}
-        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative">
+        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative">
           <div className="max-w-3xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">03 / THE COGNITIVE TRAP</span>
@@ -601,7 +610,7 @@ export default function App() {
 
 
         {/* SECTION 6: Soma Reveal */}
-        <section className="py-32 px-6 border-b border-brand-gray bg-brand-black/50 backdrop-blur-md relative text-center">
+        <section className="py-32 px-6 border-b border-brand-gray bg-brand-black relative text-center">
           <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/0 via-brand-accent/5 to-brand-dark/0 pointer-events-none"></div>
           <div className="max-w-3xl mx-auto space-y-8 relative z-10">
             <span className="text-xs font-mono text-brand-cyan tracking-widest uppercase">Introducing Ornyx // Soma</span>
@@ -627,7 +636,7 @@ export default function App() {
 
 
         {/* SECTION 7: How Soma works & Live Sandbox Simulator */}
-        <section id="sandbox" className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative">
+        <section id="sandbox" className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative">
           <div className="max-w-7xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">05 / LIVE PROTOTYPE</span>
@@ -786,7 +795,7 @@ export default function App() {
 
 
         {/* SECTION 8: Why Soma is different */}
-        <section id="comparison" className="py-24 px-6 border-b border-brand-gray bg-brand-black/50 backdrop-blur-md relative">
+        <section id="comparison" className="py-24 px-6 border-b border-brand-gray bg-brand-black relative">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">06 / ARCHITECTURAL CONTRAST</span>
@@ -823,7 +832,7 @@ export default function App() {
 
 
         {/* SECTION 9: What exists now */}
-        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative">
+        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">07 / HONEST PROOF</span>
@@ -868,7 +877,7 @@ export default function App() {
 
 
         {/* SECTION 10: Roadmap snapshot */}
-        <section id="roadmap" className="py-24 px-6 border-b border-brand-gray bg-brand-black/50 backdrop-blur-md relative">
+        <section id="roadmap" className="py-24 px-6 border-b border-brand-gray bg-brand-black relative">
           <div className="max-w-5xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">08 / DEVELOPMENT PATH</span>
@@ -914,7 +923,7 @@ export default function App() {
 
 
         {/* SECTION 11: Who it is for / not for */}
-        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark/50 backdrop-blur-md relative">
+        <section className="py-24 px-6 border-b border-brand-gray bg-brand-dark relative">
           <div className="max-w-4xl mx-auto space-y-12">
             <div className="text-center space-y-4">
               <span className="text-xs font-mono text-brand-accent tracking-widest">09 / ALIGNMENT</span>
@@ -958,7 +967,7 @@ export default function App() {
 
 
         {/* SECTION 12: Early access CTA */}
-        <section id="cta" className="py-32 px-6 bg-brand-black/50 backdrop-blur-md relative text-center">
+        <section id="cta" className="py-32 px-6 bg-brand-black relative text-center">
           <div className="max-w-2xl mx-auto space-y-8 relative z-10">
             <span className="text-xs font-mono text-brand-accent tracking-widest uppercase">Inquiry Complete</span>
             <h2 className="text-4xl md:text-5xl font-light text-white leading-tight font-display">
